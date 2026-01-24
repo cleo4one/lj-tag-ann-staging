@@ -167,7 +167,7 @@ input[type="range"]::-moz-range-thumb {
 
 /* 편명 선택 박스(#flight-select)에 애니메이션 적용 */
 #flight-select {
-    border-width: 2px !important; /* 테두리를 조금 더 두껍게 해서 잘 보이게 함 */
+    border-width: 1px !important; /* 다른 선택지와 동일한 1px 두께로 변경 */
     animation: aurora-neon-flow 4s linear infinite; /* 4초 간격으로 무한 반복 */
     transition: all 0.3s ease;
 }
