@@ -784,4 +784,3 @@ if ('speechSynthesis' in window) {
     startBtn.textContent = 'Not Supported';
     document.querySelector('#start-overlay p').textContent = 'Sorry, your browser does not support the Web Speech API required for this application.';
 }
-
