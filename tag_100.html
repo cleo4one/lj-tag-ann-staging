@@ -1,1266 +1,1123 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>JIN AIR - TAG Station Announcement</title>
-  
-  <!-- 원본 Tailwind CSS 엔진 및 폰트 로드 (원본 디자인 100% 복원) -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-  
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            lj: {
-              lime: '#B4DB2B',
-              'lime-hover': '#9ec21f',
-              navy: '#0B1320',
-              card: '#162032',
-              'card-inner': '#111A28',
-              border: '#2A384F',
-              accent: '#00E5FF'
-            }
-          },
-          fontFamily: {
-            sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
-          }
-        }
-      }
-    }
-  </script>
+/* 줌인/더블탭 확대 방지용 터치 액션 */
+html, body {
+  touch-action: pan-x pan-y;
+  -webkit-text-size-adjust: 100%;
+}
 
-  <!-- 원본 style.css 및 추가 최적화 스타일 인라인 통합 -->
-  <style>
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
-    body {
-      background-color: #0B1320;
-      color: #F1F5F9;
-      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-      user-select: none;
-      -webkit-user-select: none;
-    }
-    
-    /* Neomorphic / Glassmorphic Custom Glow */
-    .glow-lime {
-      box-shadow: 0 0 15px rgba(180, 219, 43, 0.35);
-    }
-    .glow-lime-sm {
-      box-shadow: 0 0 8px rgba(180, 219, 43, 0.4);
-    }
-    .glow-cyan {
-      box-shadow: 0 0 15px rgba(0, 229, 255, 0.35);
-    }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
 
-    /* Word Highlight during TTS Playback */
-    .tts-highlight {
-      background-color: #B4DB2B !important;
-      color: #0B1320 !important;
-      font-weight: 800;
-      padding: 1px 4px;
-      border-radius: 4px;
-      transition: all 0.1s ease;
-    }
+body {
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Pretendard", Roboto, sans-serif;
+  line-height: 1.5;
+  padding-bottom: 80px;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
 
-    /* Collapsible Accordion smooth transitions */
-    .accordion-content {
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .accordion-content.expanded {
-      max-height: 1200px;
-    }
-    
-    /* Range input styling */
-    input[type=range] {
-      accent-color: #B4DB2B;
-    }
+/* Start Overlay (Audio Unlock for Mobile Web Speech) */
+#startOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 19, 32, 0.96);
+  backdrop-filter: blur(10px);
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+}
+.overlay-content {
+  max-width: 380px;
+  width: 100%;
+}
+.logo-badge {
+  display: inline-block;
+  background: var(--lj-lime-dim);
+  color: var(--lj-lime);
+  border: 1px solid var(--lj-lime);
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-bottom: 16px;
+  box-shadow: 0 0 16px var(--lj-lime-glow);
+}
+.overlay-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 8px;
+}
+.overlay-desc {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 28px;
+  line-height: 1.6;
+}
+.btn-start {
+  width: 100%;
+  padding: 16px 20px;
+  background: var(--lj-lime);
+  color: #0B1320;
+  font-size: 16px;
+  font-weight: 800;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  box-shadow: 0 4px 20px var(--lj-lime-glow);
+  transition: all 0.2s ease;
+}
+.btn-start:active {
+  transform: scale(0.98);
+  background: var(--lj-lime-hover);
+}
 
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar {
-      width: 5px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #0B1320;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #2A384F;
-      border-radius: 3px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #B4DB2B;
-    }
-  </style>
-</head>
-<body class="min-h-screen pb-24 text-slate-100 antialiased selection:bg-lime-400 selection:text-slate-900">
+/* Sticky Top Header */
+.top-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: rgba(13, 23, 38, 0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-card);
+  padding: 12px 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+.header-branding {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.brand-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.3px;
+}
+.tag-chip {
+  background: var(--lj-lime);
+  color: #0B1320;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.status-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--lj-lime);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--lj-lime);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
 
-  <!-- ==================== START OVERLAY (브라우저 오디오 권한 언락) ==================== -->
-  <div id="startOverlay" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-950/95 px-6 backdrop-blur-md transition-opacity duration-300">
-    <div class="w-full max-w-sm text-center">
-      <div class="mb-4 inline-flex items-center gap-2 rounded-full border border-lime-400/40 bg-lime-400/10 px-4 py-1.5 text-xs font-bold tracking-wider text-lime-400 glow-lime-sm">
-        <span class="inline-block h-2 w-2 animate-pulse rounded-full bg-lime-400"></span>
-        JIN AIR BOHOL-PANGLAO (TAG)
+/* Flight & Destination Toggle Selectors */
+.selector-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.select-card {
+  background: var(--bg-card-inner);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-md);
+  padding: 8px 10px;
+}
+.select-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+  display: block;
+}
+.btn-group {
+  display: flex;
+  gap: 6px;
+}
+.btn-toggle {
+  flex: 1;
+  padding: 8px 4px;
+  background: transparent;
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+.btn-toggle.active {
+  background: var(--lj-lime);
+  color: #0B1320;
+  border-color: var(--lj-lime);
+  box-shadow: 0 0 12px var(--lj-lime-glow);
+}
+
+/* Voice / Settings Collapsible Drawer */
+.settings-drawer-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: var(--bg-card-inner);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.settings-drawer-toggle:hover {
+  color: var(--text-main);
+}
+.settings-panel {
+  display: none;
+  background: var(--bg-card-inner);
+  border: 1px solid var(--border-card);
+  border-top: none;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  padding: 12px;
+  margin-top: -4px;
+}
+.settings-panel.open {
+  display: block;
+}
+.setting-row {
+  margin-bottom: 10px;
+}
+.setting-row:last-child {
+  margin-bottom: 0;
+}
+.setting-row label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.setting-row select {
+  width: 100%;
+  background: var(--bg-main);
+  color: var(--text-main);
+  border: 1px solid var(--border-card);
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  outline: none;
+}
+.setting-row select:focus {
+  border-color: var(--lj-lime);
+}
+.setting-row input[type="range"] {
+  width: 100%;
+  accent-color: var(--lj-lime);
+}
+
+/* Main Container & Announcement Cards */
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 16px 12px;
+}
+.ann-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ann-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.ann-card.playing {
+  border-color: var(--lj-lime);
+  box-shadow: 0 0 16px var(--lj-lime-glow);
+}
+
+.ann-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  cursor: pointer;
+  user-select: none;
+  background: var(--bg-card);
+  transition: background 0.15s;
+}
+.ann-header:active {
+  background: var(--bg-card-hover);
+}
+.ann-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+.ann-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--lj-lime-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--lj-lime);
+  flex-shrink: 0;
+}
+.ann-icon svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+.ann-num {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--lj-lime);
+  background: rgba(180, 219, 43, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.ann-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #fff;
+}
+.chevron {
+  color: var(--text-dim);
+  font-size: 12px;
+  transition: transform 0.2s ease;
+  margin-left: 8px;
+}
+.ann-card.open .chevron {
+  transform: rotate(180deg);
+  color: var(--lj-lime);
+}
+
+.ann-body {
+  display: none;
+  padding: 14px 16px 16px;
+  border-top: 1px solid var(--border-card);
+  background: var(--bg-card-inner);
+}
+.ann-card.open .ann-body {
+  display: block;
+}
+
+/* Inputs in Card */
+.inputs-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  align-items: center;
+}
+.input-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.input-field label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.input-field input, .input-field select, .input-field textarea {
+  background: var(--bg-main);
+  color: #fff;
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+  font-size: 12px;
+  outline: none;
+}
+.input-field textarea {
+  width: 100%;
+  min-height: 44px;
+  resize: vertical;
+}
+.input-field input:focus, .input-field select:focus, .input-field textarea:focus {
+  border-color: var(--lj-lime);
+}
+
+/* Repeat Counter Widget */
+.repeat-ctrl {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-sm);
+  background: var(--bg-main);
+  overflow: hidden;
+}
+.repeat-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  padding: 4px 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.repeat-btn:active {
+  color: var(--lj-lime);
+  background: rgba(255, 255, 255, 0.05);
+}
+.repeat-val {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 0 4px;
+  color: var(--lj-lime);
+  min-width: 18px;
+  text-align: center;
+}
+
+.btn-action-small {
+  background: rgba(180, 219, 43, 0.1);
+  border: 1px solid var(--lj-lime);
+  color: var(--lj-lime);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-action-small:active {
+  background: var(--lj-lime);
+  color: #0B1320;
+}
+
+/* Script Display & Word Highlighting */
+.script-box {
+  background: var(--bg-main);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: #E2E8F0;
+  margin-bottom: 12px;
+  word-break: keep-all;
+}
+
+/* 실시간 단어 하이라이트 스타일 */
+.script-box .word-token {
+  display: inline;
+  padding: 1px 2px;
+  border-radius: 3px;
+  transition: background-color 0.1s ease, color 0.1s ease;
+}
+.script-box .word-token.highlight {
+  background: var(--lj-lime) !important;
+  color: #0B1320 !important;
+  font-weight: 800 !important;
+  box-shadow: 0 0 10px var(--lj-lime-glow);
+}
+.script-box .var-tag {
+  color: var(--lj-lime);
+  font-weight: 700;
+}
+
+/* English Translation Tooltip Box */
+.tooltip-en-box {
+  display: none;
+  background: #172439;
+  border-left: 3px solid var(--lj-lime);
+  padding: 10px 12px;
+  font-size: 12px;
+  color: #CBD5E1;
+  line-height: 1.5;
+  margin-bottom: 12px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-style: italic;
+}
+.tooltip-en-box.show {
+  display: block;
+}
+
+/* Playback Progress Bar (재생 진행 바) */
+.progress-bar-wrap {
+  width: 100%;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-bottom: 12px;
+  position: relative;
+}
+.progress-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--lj-lime);
+  box-shadow: 0 0 10px var(--lj-lime);
+  transition: width 0.15s ease-out;
+  border-radius: var(--radius-full);
+}
+
+/* Controls Bar */
+.controls-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-play {
+  flex: 1;
+  padding: 10px 14px;
+  background: var(--lj-lime);
+  color: #0B1320;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 13.5px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.15s;
+}
+.btn-play:active {
+  transform: scale(0.98);
+  background: var(--lj-lime-hover);
+}
+.btn-stop {
+  padding: 10px 14px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid var(--color-danger);
+  color: #F87171;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.btn-stop:active {
+  background: var(--color-danger);
+  color: #fff;
+}
+.btn-en-toggle {
+  padding: 10px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  color: var(--text-muted);
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.btn-en-toggle.active {
+  border-color: var(--lj-lime);
+  color: var(--lj-lime);
+  background: var(--lj-lime-dim);
+}
+
+/* Footer Information */
+.footer {
+  text-align: center;
+  margin-top: 30px;
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+
+
+<!-- Flight & Destination Selectors -->
+<div class="selector-grid">
+  <div class="select-card">
+    <span class="select-label">Flight (편명)</span>
+    <div class="btn-group" id="flightSelector">
+      <button class="btn-toggle active" data-flight="LJ044">LJ044</button>
+      <button class="btn-toggle" data-flight="LJ046">LJ046</button>
+    </div>
+  </div>
+  <div class="select-card">
+    <span class="select-label">Destination (목적지)</span>
+    <div class="btn-group" id="destSelector">
+      <button class="btn-toggle active" data-dest="ICN">ICN (인천)</button>
+      <button class="btn-toggle" data-dest="PUS">PUS (부산)</button>
+    </div>
+  </div>
+</div>
+
+<!-- Voice Settings Collapsible Drawer -->
+<div class="settings-drawer-toggle" id="btnToggleSettings">
+  <span>⚙️ 음성 엔진 및 속도/피치 조절</span>
+  <span id="settingsChevron">▼</span>
+</div>
+<div class="settings-panel" id="settingsPanel">
+  <div class="setting-row">
+    <label>한국어 음성 (Korean Voice)</label>
+    <select id="selectVoiceKo"></select>
+  </div>
+  <div class="setting-row">
+    <label>영어 음성 (English Voice)</label>
+    <select id="selectVoiceEn"></select>
+  </div>
+  <div class="setting-row">
+    <label>
+      <span>발화 속도 (Speed)</span>
+      <span id="lblSpeed">1.0</span>
+    </label>
+    <input type="range" id="rangeSpeed" min="0.7" max="1.3" step="0.05" value="1.0">
+  </div>
+  <div class="setting-row">
+    <label>
+      <span>음정 피치 (Pitch)</span>
+      <span id="lblPitch">1.0</span>
+    </label>
+    <input type="range" id="rangePitch" min="0.8" max="1.2" step="0.05" value="1.0">
+  </div>
+</div>
+
+
+  <!-- #1 Final Call for Check-in -->
+  <div class="ann-card" data-ann-id="1">
+    <div class="ann-header">
+      <div class="ann-title-wrap">
+        <div class="ann-icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.8 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg></div>
+        <span class="ann-num">#1</span>
+        <span class="ann-title">Final Call for Check-in (No names)</span>
       </div>
-      <h1 class="text-2xl font-black tracking-tight text-white sm:text-3xl">공항 안내방송 시스템</h1>
-      <p class="mt-2 text-sm text-slate-400">모바일 웹 브라우저 음성 엔진 활성화 및 음질 최적화를 위해 시작 버튼을 터치해 주세요.</p>
-      
-      <button id="btnStart" class="mt-8 flex w-full items-center justify-center gap-2 rounded-2xl bg-lime-400 py-4 text-base font-extrabold text-slate-950 shadow-lg shadow-lime-400/25 transition active:scale-95 hover:bg-lime-300">
-        <svg class="h-5 w-5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-        진에어 방송 플레이어 시작
-      </button>
-      <p class="mt-4 text-xs text-slate-500">Bohol-Panglao International Airport Ground Operations</p>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="ann-body">
+      <div class="script-box" data-template="진에어에서 탑승수속을 마감합니다. {destination}행 진에어 탑승수속을 곧 마감할 예정이오니, 아직 탑승수속을 마치지 않으신 승객께서는 지금 즉시 진에어 체크인 카운터로 와 주시기 바랍니다."></div>
+      <div class="tooltip-en-box" data-en-template="Jin Air is closing check-in. Check-in for Jin Air flight to {destEn} will close shortly. Passengers who have not checked in, please proceed to the Jin Air check-in counter immediately."></div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill"></div></div>
+      <div class="controls-row">
+        <button class="btn-play">▶ 재생</button>
+        <button class="btn-stop">■ 정지</button>
+        <button class="btn-en-toggle">EN</button>
+      </div>
     </div>
   </div>
 
-  <!-- ==================== TOP STICKY HEADER ==================== -->
-  <header class="sticky top-0 z-40 border-b border-slate-800/80 bg-slate-900/90 px-4 py-3 backdrop-blur-lg">
-    <div class="mx-auto max-w-xl">
-      <!-- 로고 및 상태바 -->
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-lime-400 text-slate-950 font-black text-sm tracking-tighter">
-            LJ
-          </div>
-          <div>
-            <div class="flex items-center gap-1.5">
-              <span class="text-sm font-black tracking-tight text-white">JIN AIR TAG</span>
-              <span class="rounded bg-lime-400/20 px-1.5 py-0.5 text-[10px] font-extrabold text-lime-400">보홀 지점</span>
-            </div>
-            <p class="text-[10px] text-slate-400 font-medium">Automated Audio Paging System</p>
-          </div>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <button id="btnToggleSettings" class="flex items-center gap-1 rounded-lg border border-slate-700 bg-slate-800/80 px-2.5 py-1.5 text-xs font-semibold text-slate-300 transition hover:bg-slate-700">
-            <svg class="h-3.5 w-3.5 text-lime-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-            <span>설정</span>
-          </button>
-        </div>
+  <!-- #2 Final Call for Check-in (With names) -->
+  <div class="ann-card" data-ann-id="2">
+    <div class="ann-header">
+      <div class="ann-title-wrap">
+        <div class="ann-icon"><svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg></div>
+        <span class="ann-num">#2</span>
+        <span class="ann-title">Final Call for Check-in (With names)</span>
       </div>
-
-      <!-- 편명 & 목적지 선택 버튼 (네온 토글) -->
-      <div class="mt-3 grid grid-cols-2 gap-2">
-        <!-- 편명 선택 -->
-        <div class="rounded-xl border border-slate-800 bg-slate-950/60 p-1.5">
-          <span class="mb-1 block text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">Flight No. (편명)</span>
-          <div class="grid grid-cols-2 gap-1" id="flightSelector">
-            <button data-flight="LJ044" class="btn-flight active rounded-lg py-1.5 text-xs font-black transition-all bg-lime-400 text-slate-950 glow-lime-sm">LJ044</button>
-            <button data-flight="LJ046" class="btn-flight rounded-lg py-1.5 text-xs font-black transition-all text-slate-400 hover:text-white">LJ046</button>
-          </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="ann-body">
+      <div class="inputs-wrap">
+        <div class="input-field" style="width: 100%;">
+          <textarea class="input-names" placeholder="승객 영문 또는 한글 성명 (쉼표 구분, 예: HONG GILDONG, KIM CHEOLSU)"></textarea>
         </div>
-
-        <!-- 목적지 선택 -->
-        <div class="rounded-xl border border-slate-800 bg-slate-950/60 p-1.5">
-          <span class="mb-1 block text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">Destination (목적지)</span>
-          <div class="grid grid-cols-2 gap-1" id="destSelector">
-            <button data-dest="ICN" class="btn-dest active rounded-lg py-1.5 text-xs font-black transition-all bg-lime-400 text-slate-950 glow-lime-sm">ICN (인천)</button>
-            <button data-dest="PUS" class="btn-dest rounded-lg py-1.5 text-xs font-black transition-all text-slate-400 hover:text-white">PUS (부산)</button>
+        <div class="input-field">
+          <button class="btn-action-small btn-trans">한글 발음 번역</button>
+        </div>
+        <div class="input-field" style="margin-left: auto;">
+          <label>이름 반복:</label>
+          <div class="repeat-ctrl">
+            <button class="repeat-btn minus">-</button>
+            <span class="repeat-val" data-repeat="2">2</span>
+            <button class="repeat-btn plus">+</button>
           </div>
         </div>
       </div>
-
-      <!-- 음성 및 속도 세부 설정 드로어 (기본 접힘) -->
-      <div id="settingsPanel" class="mt-2 hidden rounded-xl border border-slate-800 bg-slate-950/95 p-3.5 transition-all">
-        <div class="space-y-3">
-          <div>
-            <label class="mb-1 block text-xs font-bold text-slate-400">한국어 음성 엔진</label>
-            <select id="selectVoiceKo" class="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-white outline-none focus:border-lime-400"></select>
-          </div>
-          <div>
-            <label class="mb-1 block text-xs font-bold text-slate-400">영어 음성 엔진</label>
-            <select id="selectVoiceEn" class="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-white outline-none focus:border-lime-400"></select>
-          </div>
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <div class="flex justify-between text-xs font-bold text-slate-400">
-                <span>속도 (Speed)</span>
-                <span id="lblSpeed" class="text-lime-400">1.0x</span>
-              </div>
-              <input type="range" id="rangeSpeed" min="0.7" max="1.3" step="0.05" value="1.0" class="w-full">
-            </div>
-            <div>
-              <div class="flex justify-between text-xs font-bold text-slate-400">
-                <span>피치 (Pitch)</span>
-                <span id="lblPitch" class="text-lime-400">1.0</span>
-              </div>
-              <input type="range" id="rangePitch" min="0.8" max="1.2" step="0.05" value="1.0" class="w-full">
-            </div>
-          </div>
-        </div>
+      <div class="script-box" data-template="진에어에서 승객을 찾습니다. {destination}행 진에어 탑승수속을 곧 마감할 예정이오니, 아직 탑승수속을 마치지 않으신 {names} 승객께서는 지금 즉시 진에어 체크인 카운터로 와 주시기 바랍니다."></div>
+      <div class="tooltip-en-box" data-en-template="Jin Air is paging missing passengers. Check-in for Jin Air flight to {destEn} will close shortly. Passenger {namesEn}, please proceed to the Jin Air check-in counter immediately."></div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill"></div></div>
+      <div class="controls-row">
+        <button class="btn-play">▶ 재생</button>
+        <button class="btn-stop">■ 정지</button>
+        <button class="btn-en-toggle">EN</button>
       </div>
     </div>
-  </header>
+  </div>
 
-  <!-- ==================== MAIN ANNOUNCEMENT LIST ==================== -->
-  <main class="mx-auto max-w-xl px-3 pt-3">
-    <div class="space-y-2.5" id="announcementContainer">
-
-      <!-- #1 Final Call for Check-in (No names) -->
-      <div class="ann-card rounded-2xl border border-slate-800 bg-slate-900/90 shadow-lg transition-all" data-ann-id="1">
-        <div class="ann-header flex cursor-pointer items-center justify-between p-3.5">
-          <div class="flex items-center gap-3">
-            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-lime-400/10 text-xs font-black text-lime-400 border border-lime-400/20">#1</span>
-            <div>
-              <h2 class="text-sm font-bold text-white">Final Call for Check-in</h2>
-              <p class="text-[11px] text-slate-400">체크인 카운터 마감 안내 (이름 없음)</p>
-            </div>
-          </div>
-          <svg class="chevron h-4 w-4 text-slate-500 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
-        </div>
-        <div class="accordion-content">
-          <div class="border-t border-slate-800/80 bg-slate-950/50 p-4">
-            <div class="script-box rounded-xl border border-slate-800 bg-slate-900/90 p-3 text-sm leading-relaxed text-slate-200" data-template="진에어에서 탑승수속을 마감합니다. {destination}행 진에어 탑승수속을 곧 마감할 예정이오니, 아직 탑승수속을 마치지 않으신 승객께서는 지금 즉시 진에어 체크인 카운터로 와 주시기 바랍니다."></div>
-            <div class="tooltip-en hidden mt-2 rounded-lg border-l-2 border-lime-400 bg-slate-900/60 p-2.5 text-xs italic text-slate-400" data-en-template="Jin Air is closing check-in. Check-in for Jin Air flight to {destEn} will close shortly. Passengers who have not checked in, please proceed to the Jin Air check-in counter immediately."></div>
-            <div class="mt-3 flex items-center gap-2">
-              <button class="btn-play flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-lime-400 py-2.5 text-xs font-black text-slate-950 transition active:scale-95 hover:bg-lime-300">
-                <svg class="h-4 w-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                <span>재생</span>
-              </button>
-              <button class="btn-stop rounded-xl border border-rose-500/30 bg-rose-500/10 px-3.5 py-2.5 text-xs font-bold text-rose-400 transition hover:bg-rose-500/20">정지</button>
-              <button class="btn-en-toggle rounded-xl border border-slate-700 bg-slate-800 px-3 py-2.5 text-xs font-bold text-slate-400 hover:text-white">EN</button>
-            </div>
-          </div>
-        </div>
+  <!-- #3 Baggage Inspection Call -->
+  <div class="ann-card" data-ann-id="3">
+    <div class="ann-header">
+      <div class="ann-title-wrap">
+        <div class="ann-icon"><svg viewBox="0 0 24 24"><path d="M19 6h-3V4c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v2H5c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-9-2h4v2h-4V4zm9 15H5V8h14v11z"/></svg></div>
+        <span class="ann-num">#3</span>
+        <span class="ann-title">Baggage Inspection Call</span>
       </div>
-
-      <!-- #2 Final Call for Check-in (With names) -->
-      <div class="ann-card rounded-2xl border border-slate-800 bg-slate-900/90 shadow-lg transition-all" data-ann-id="2">
-        <div class="ann-header flex cursor-pointer items-center justify-between p-3.5">
-          <div class="flex items-center gap-3">
-            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-lime-400/10 text-xs font-black text-lime-400 border border-lime-400/20">#2</span>
-            <div>
-              <h2 class="text-sm font-bold text-white">Final Call for Check-in (With Names)</h2>
-              <p class="text-[11px] text-slate-400">체크인 마감 전 미수속 승객 호출</p>
-            </div>
-          </div>
-          <svg class="chevron h-4 w-4 text-slate-500 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
-        </div>
-        <div class="accordion-content">
-          <div class="border-t border-slate-800/80 bg-slate-950/50 p-4">
-            <div class="mb-3 space-y-2 rounded-xl border border-slate-800/80 bg-slate-900/40 p-3">
-              <label class="block text-xs font-bold text-slate-400">승객 성명 (한글 또는 영문)</label>
-              <textarea class="input-names w-full rounded-lg border border-slate-700 bg-slate-900 p-2 text-xs text-white placeholder-slate-500 outline-none focus:border-lime-400" rows="2" placeholder="예: HONG GILDONG, KIM CHEOLSU"></textarea>
-              <div class="flex items-center justify-between pt-1">
-                <button class="btn-trans rounded-lg border border-lime-400/40 bg-lime-400/10 px-2.5 py-1 text-xs font-bold text-lime-400 hover:bg-lime-400/20">한글 발음 번역</button>
-                <div class="flex items-center gap-1.5 text-xs text-slate-400 font-bold">
-                  <span>반복:</span>
-                  <div class="repeat-ctrl flex items-center rounded-lg border border-slate-700 bg-slate-900">
-                    <button class="btn-repeat-minus px-2 py-0.5 text-slate-300">-</button>
-                    <span class="repeat-val px-1 text-lime-400 font-black" data-repeat="2">2</span>
-                    <button class="btn-repeat-plus px-2 py-0.5 text-slate-300">+</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="script-box rounded-xl border border-slate-800 bg-slate-900/90 p-3 text-sm leading-relaxed text-slate-200" data-template="진에어에서 승객을 찾습니다. {destination}행 진에어 탑승수속을 곧 마감할 예정이오니, 아직 탑승수속을 마치지 않으신 {names} 승객께서는 지금 즉시 진에어 체크인 카운터로 와 주시기 바랍니다."></div>
-            <div class="tooltip-en hidden mt-2 rounded-lg border-l-2 border-lime-400 bg-slate-900/60 p-2.5 text-xs italic text-slate-400" data-en-template="Jin Air is paging missing passengers. Check-in for Jin Air flight to {destEn} will close shortly. Passenger {namesEn}, please proceed to the Jin Air check-in counter immediately."></div>
-            <div class="mt-3 flex items-center gap-2">
-              <button class="btn-play flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-lime-400 py-2.5 text-xs font-black text-slate-950 transition active:scale-95 hover:bg-lime-300">
-                <svg class="h-4 w-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                <span>재생</span>
-              </button>
-              <button class="btn-stop rounded-xl border border-rose-500/30 bg-rose-500/10 px-3.5 py-2.5 text-xs font-bold text-rose-400 transition hover:bg-rose-500/20">정지</button>
-              <button class="btn-en-toggle rounded-xl border border-slate-700 bg-slate-800 px-3 py-2.5 text-xs font-bold text-slate-400 hover:text-white">EN</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- #3 Baggage Inspection Call -->
-      <div class="ann-card rounded-2xl border border-slate-800 bg-slate-900/90 shadow-lg transition-all" data-ann-id="3">
-        <div class="ann-header flex cursor-pointer items-center justify-between p-3.5">
-          <div class="flex items-center gap-3">
-            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-lime-400/10 text-xs font-black text-lime-400 border border-lime-400/20">#3</span>
-            <div>
-              <h2 class="text-sm font-bold text-white">Baggage Inspection Call</h2>
-              <p class="text-[11px] text-slate-400">위탁수하물 개장 검사 승객 호출</p>
-            </div>
-          </div>
-          <svg class="chevron h-4 w-4 text-slate-500 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
-        </div>
-        <div class="accordion-content">
-          <div class="border-t border-slate-800/80 bg-slate-950/50 p-4">
-            <div class="mb-3 space-y-2 rounded-xl border border-slate-800/80 bg-slate-900/40 p-3">
-              <label class="block text-xs font-bold text-slate-400">승객 성명</label>
-              <textarea class="input-names w-full rounded-lg border border-slate-700 bg-slate-900 p-2 text-xs text-white placeholder-slate-500 outline-none focus:border-lime-400" rows="1" placeholder="예: LEE YOUNGHEE"></textarea>
-              <div class="flex items-center justify-between pt-1">
-                <button class="btn-trans rounded-lg border border-lime-400/40 bg-lime-400/10 px-2.5 py-1 text-xs font-bold text-lime-400 hover:bg-lime-400/20">한글 발음 번역</button>
-                <div class="flex items-center gap-1.5 text-xs text-slate-400 font-bold">
-                  <span>반복:</span>
-                  <div class="repeat-ctrl flex items-center rounded-lg border border-slate-700 bg-slate-900">
-                    <button class="btn-repeat-minus px-2 py-0.5 text-slate-300">-</button>
-                    <span class="repeat-val px-1 text-lime-400 font-black" data-repeat="2">2</span>
-                    <button class="btn-repeat-plus px-2 py-0.5 text-slate-300">+</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="script-box rounded-xl border border-slate-800 bg-slate-900/90 p-3 text-sm leading-relaxed text-slate-200" data-template="진에어에서 위탁수하물 확인 안내 말씀드립니다. {names} 승객께서는 즉시 진에어 체크인 카운터로 오셔서 위탁수하물을 확인해 주시기 바랍니다."></div>
-            <div class="tooltip-en hidden mt-2 rounded-lg border-l-2 border-lime-400 bg-slate-900/60 p-2.5 text-xs italic text-slate-400" data-en-template="Jin Air baggage inspection announcement. Passenger {namesEn}, please proceed to the Jin Air check-in counter immediately for baggage inspection."></div>
-            <div class="mt-3 flex items-center gap-2">
-              <button class="btn-play flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-lime-400 py-2.5 text-xs font-black text-slate-950 transition active:scale-95 hover:bg-lime-300">
-                <svg class="h-4 w-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                <span>재생</span>
-              </button>
-              <button class="btn-stop rounded-xl border border-rose-500/30 bg-rose-500/10 px-3.5 py-2.5 text-xs font-bold text-rose-400 transition hover:bg-rose-500/20">정지</button>
-              <button class="btn-en-toggle rounded-xl border border-slate-700 bg-slate-800 px-3 py-2.5 text-xs font-bold text-slate-400 hover:text-white">EN</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- #4 Congested, proceed to IMMG -->
-      <div class="ann-card rounded-2xl border border-slate-800 bg-slate-900/90 shadow-lg transition-all" data-ann-id="4">
-        <div class="ann-header flex cursor-pointer items-center justify-between p-3.5">
-          <div class="flex items-center gap-3">
-            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-lime-400/10 text-xs font-black text-lime-400 border border-lime-400/20">#4</span>
-            <div>
-              <h2 class="text-sm font-bold text-white">Congested, Proceed to IMMG</h2>
-              <p class="text-[11px] text-slate-400">출국심사장 혼잡 시 빠른 이동 안내</p>
-            </div>
-          </div>
-          <svg class="chevron h-4 w-4 text-slate-500 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
-        </div>
-        <div class="accordion-content">
-          <div class="border-t border-slate-800/80 bg-slate-950/50 p-4">
-            <div class="script-box rounded-xl border border-slate-800 bg-slate-900/90 p-3 text-sm leading-relaxed text-slate-200" data-template="공항 내 출국 심사장이 매우 혼잡하오니, 탑승수속을 마치신 승객께서는 지체 없이 출국 심사장으로 이동하여 주시기 바랍니다."></div>
-            <div class="tooltip-en hidden mt-2 rounded-lg border-l-2 border-lime-400 bg-slate-900/60 p-2.5 text-xs italic text-slate-400" data-en-template="The immigration checkpoint is very crowded. Passengers who have completed check-in, please proceed to immigration immediately."></div>
-            <div class="mt-3 flex items-center gap-2">
-              <button class="btn-play flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-lime-400 py-2.5 text-xs font-black text-slate-950 transition active:scale-95 hover:bg-lime-300">
-                <svg class="h-4 w-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                <span>재생</span>
-              </button>
-              <button class="btn-stop rounded-xl border border-rose-500/30 bg-rose-500/10 px-3.5 py-2.5 text-xs font-bold text-rose-400 transition hover:bg-rose-500/20">정지</button>
-              <button class="btn-en-toggle rounded-xl border border-slate-700 bg-slate-800 px-3 py-2.5 text-xs font-bold text-slate-400 hover:text-white">EN</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- #5 Pre-BRDG (PAX who need assistance) -->
-      <div class="ann-card rounded-2xl border border-slate-800 bg-slate-900/90 shadow-lg transition-all" data-ann-id="5">
-        <div class="ann-header flex cursor-pointer items-center justify-between p-3.5">
-          <div class="flex items-center gap-3">
-            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-lime-400/10 text-xs font-black text-lime-400 border border-lime-400/20">#5</span>
-            <div>
-              <h2 class="text-sm font-bold text-white">Pre-Boarding Assistance</h2>
-              <p class="text-[11px] text-slate-400">교통약자 / 유아동반 우선 탑승 안내</p>
-            </div>
-          </div>
-          <svg class="chevron h-4 w-4 text-slate-500 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
-        </div>
-        <div class="accordion-content">
-          <div class="border-t border-slate-800/80 bg-slate-950/50 p-4">
-            <div class="script-box rounded-xl border border-slate-800 bg-slate-900/90 p-3 text-sm leading-relaxed text-slate-200" data-template="진에어 {destination}행 {flightNumber}편 탑승을 시작하겠습니다. 노약자, 임산부, 유아 동반 승객 등 도움이 필요하신 승객께서는 먼저 탑승하여 주시기 바랍니다."></div>
-            <div class="tooltip-en hidden mt-2 rounded-lg border-l-2 border-lime-400 bg-slate-900/60 p-2.5 text-xs italic text-slate-400" data-en-template="Jin Air flight {flightNumber} to {destEn} is now ready for pre-boarding. Passengers needing assistance, elderly, pregnant women, and passengers with infants, please board first."></div>
-            <div class="mt-3 flex items-center gap-2">
-              <button class="btn-play flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-lime-400 py-2.5 text-xs font-black text-slate-950 transition active:scale-95 hover:bg-lime-300">
-                <svg class="h-4 w-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                <span>재생</span>
-              </button>
-              <button class="btn-stop rounded-xl border border-rose-500/30 bg-rose-500/10 px-3.5 py-2.5 text-xs font-bold text-rose-400 transition hover:bg-rose-500/20">정지</button>
-              <button class="btn-en-toggle rounded-xl border border-slate-700 bg-slate-800 px-3 py-2.5 text-xs font-bold text-slate-400 hover:text-white">EN</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- #6 Commence Boarding (General) -->
-      <div class="ann-card rounded-2xl border border-slate-800 bg-slate-900/90 shadow-lg transition-all" data-ann-id="6">
-        <div class="ann-header flex cursor-pointer items-center justify-between p-3.5">
-          <div class="flex items-center gap-3">
-            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-lime-400/10 text-xs font-black text-lime-400 border border-lime-400/20">#6</span>
-            <div>
-              <h2 class="text-sm font-bold text-white">Commence Boarding (General)</h2>
-              <p class="text-[11px] text-slate-400">일반 탑승 시작 안내</p>
-            </div>
-          </div>
-          <svg class="chevron h-4 w-4 text-slate-500 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
-        </div>
-        <div class="accordion-content">
-          <div class="border-t border-slate-800/80 bg-slate-950/50 p-4">
-            <div class="mb-3 flex items-center justify-between rounded-xl border border-slate-800/80 bg-slate-900/40 p-3">
-              <div class="flex items-center gap-2">
-                <label class="text-xs font-bold text-slate-400">Gate #:</label>
-                <input type="number" class="input-gate w-14 rounded-lg border border-slate-700 bg-slate-900 p-1.5 text-center text-xs font-bold text-white outline-none focus:border-lime-400" value="3" min="1" max="10">
-              </div>
-              <div class="flex items-center gap-1.5 text-xs text-slate-400 font-bold">
-                <span>반복:</span>
-                <div class="repeat-ctrl flex items-center rounded-lg border border-slate-700 bg-slate-900">
-                  <button class="btn-repeat-minus px-2 py-0.5 text-slate-300">-</button>
-                  <span class="repeat-val px-1 text-lime-400 font-black" data-repeat="2">2</span>
-                  <button class="btn-repeat-plus px-2 py-0.5 text-slate-300">+</button>
-                </div>
-              </div>
-            </div>
-            <div class="script-box rounded-xl border border-slate-800 bg-slate-900/90 p-3 text-sm leading-relaxed text-slate-200" data-template="진에어 {destination}행 {flightNumber}편 탑승을 시작하겠습니다. 탑승권을 소지하신 승객께서는 {gate} 탑승구로 탑승하여 주시기 바랍니다."></div>
-            <div class="tooltip-en hidden mt-2 rounded-lg border-l-2 border-lime-400 bg-slate-900/60 p-2.5 text-xs italic text-slate-400" data-en-template="Jin Air flight {flightNumber} to {destEn} is now boarding. All passengers with boarding passes please proceed to Gate {gateNum} for boarding."></div>
-            <div class="mt-3 flex items-center gap-2">
-              <button class="btn-play flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-lime-400 py-2.5 text-xs font-black text-slate-950 transition active:scale-95 hover:bg-lime-300">
-                <svg class="h-4 w-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                <span>재생</span>
-              </button>
-              <button class="btn-stop rounded-xl border border-rose-500/30 bg-rose-500/10 px-3.5 py-2.5 text-xs font-bold text-rose-400 transition hover:bg-rose-500/20">정지</button>
-              <button class="btn-en-toggle rounded-xl border border-slate-700 bg-slate-800 px-3 py-2.5 text-xs font-bold text-slate-400 hover:text-white">EN</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- #7 In the middle of Boarding -->
-      <div class="ann-card rounded-2xl border border-slate-800 bg-slate-900/90 shadow-lg transition-all" data-ann-id="7">
-        <div class="ann-header flex cursor-pointer items-center justify-between p-3.5">
-          <div class="flex items-center gap-3">
-            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-lime-400/10 text-xs font-black text-lime-400 border border-lime-400/20">#7</span>
-            <div>
-              <h2 class="text-sm font-bold text-white">In the Middle of Boarding</h2>
-              <p class="text-[11px] text-slate-400">탑승 진행 중 안내</p>
-            </div>
-          </div>
-          <svg class="chevron h-4 w-4 text-slate-500 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
-        </div>
-        <div class="accordion-content">
-          <div class="border-t border-slate-800/80 bg-slate-950/50 p-4">
-            <div class="mb-3 flex items-center justify-between rounded-xl border border-slate-800/80 bg-slate-900/40 p-3">
-              <div class="flex items-center gap-2">
-                <label class="text-xs font-bold text-slate-400">Gate #:</label>
-                <input type="number" class="input-gate w-14 rounded-lg border border-slate-700 bg-slate-900 p-1.5 text-center text-xs font-bold text-white outline-none focus:border-lime-400" value="3" min="1" max="10">
-              </div>
-              <div class="flex items-center gap-1.5 text-xs text-slate-400 font-bold">
-                <span>반복:</span>
-                <div class="repeat-ctrl flex items-center rounded-lg border border-slate-700 bg-slate-900">
-                  <button class="btn-repeat-minus px-2 py-0.5 text-slate-300">-</button>
-                  <span class="repeat-val px-1 text-lime-400 font-black" data-repeat="2">2</span>
-                  <button class="btn-repeat-plus px-2 py-0.5 text-slate-300">+</button>
-                </div>
-              </div>
-            </div>
-            <div class="script-box rounded-xl border border-slate-800 bg-slate-900/90 p-3 text-sm leading-relaxed text-slate-200" data-template="진에어 {destination}행 {flightNumber}편 탑승이 진행 중입니다. 아직 탑승하지 않으신 승객께서는 신속히 {gate} 탑승구로 이동해 주시기 바랍니다."></div>
-            <div class="tooltip-en hidden mt-2 rounded-lg border-l-2 border-lime-400 bg-slate-900/60 p-2.5 text-xs italic text-slate-400" data-en-template="Jin Air flight {flightNumber} to {destEn} is now boarding. Remaining passengers please proceed quickly to Gate {gateNum}."></div>
-            <div class="mt-3 flex items-center gap-2">
-              <button class="btn-play flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-lime-400 py-2.5 text-xs font-black text-slate-950 transition active:scale-95 hover:bg-lime-300">
-                <svg class="h-4 w-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                <span>재생</span>
-              </button>
-              <button class="btn-stop rounded-xl border border-rose-500/30 bg-rose-500/10 px-3.5 py-2.5 text-xs font-bold text-rose-400 transition hover:bg-rose-500/20">정지</button>
-              <button class="btn-en-toggle rounded-xl border border-slate-700 bg-slate-800 px-3 py-2.5 text-xs font-bold text-slate-400 hover:text-white">EN</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- #8 Final Call for Boarding -->
-      <div class="ann-card rounded-2xl border border-slate-800 bg-slate-900/90 shadow-lg transition-all" data-ann-id="8">
-        <div class="ann-header flex cursor-pointer items-center justify-between p-3.5">
-          <div class="flex items-center gap-3">
-            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-lime-400/10 text-xs font-black text-lime-400 border border-lime-400/20">#8</span>
-            <div>
-              <h2 class="text-sm font-bold text-white">Final Call for Boarding</h2>
-              <p class="text-[11px] text-slate-400">최종 탑승 안내 (마감 직전)</p>
-            </div>
-          </div>
-          <svg class="chevron h-4 w-4 text-slate-500 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
-        </div>
-        <div class="accordion-content">
-          <div class="border-t border-slate-800/80 bg-slate-950/50 p-4">
-            <div class="mb-3 flex items-center justify-between rounded-xl border border-slate-800/80 bg-slate-900/40 p-3">
-              <div class="flex items-center gap-2">
-                <label class="text-xs font-bold text-slate-400">Gate #:</label>
-                <input type="number" class="input-gate w-14 rounded-lg border border-slate-700 bg-slate-900 p-1.5 text-center text-xs font-bold text-white outline-none focus:border-lime-400" value="3" min="1" max="10">
-              </div>
-              <div class="flex items-center gap-1.5 text-xs text-slate-400 font-bold">
-                <span>반복:</span>
-                <div class="repeat-ctrl flex items-center rounded-lg border border-slate-700 bg-slate-900">
-                  <button class="btn-repeat-minus px-2 py-0.5 text-slate-300">-</button>
-                  <span class="repeat-val px-1 text-lime-400 font-black" data-repeat="2">2</span>
-                  <button class="btn-repeat-plus px-2 py-0.5 text-slate-300">+</button>
-                </div>
-              </div>
-            </div>
-            <div class="script-box rounded-xl border border-slate-800 bg-slate-900/90 p-3 text-sm leading-relaxed text-slate-200" data-template="진에어 {destination}행 {flightNumber}편 최종 탑승 안내입니다. 곧 출입문을 닫을 예정이오니, 탑승하지 않으신 승객께서는 즉시 {gate} 탑승구로 와 주시기 바랍니다."></div>
-            <div class="tooltip-en hidden mt-2 rounded-lg border-l-2 border-lime-400 bg-slate-900/60 p-2.5 text-xs italic text-slate-400" data-en-template="Final boarding call for Jin Air flight {flightNumber} to {destEn}. The doors will close shortly. Passengers please proceed immediately to Gate {gateNum}."></div>
-            <div class="mt-3 flex items-center gap-2">
-              <button class="btn-play flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-lime-400 py-2.5 text-xs font-black text-slate-950 transition active:scale-95 hover:bg-lime-300">
-                <svg class="h-4 w-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                <span>재생</span>
-              </button>
-              <button class="btn-stop rounded-xl border border-rose-500/30 bg-rose-500/10 px-3.5 py-2.5 text-xs font-bold text-rose-400 transition hover:bg-rose-500/20">정지</button>
-              <button class="btn-en-toggle rounded-xl border border-slate-700 bg-slate-800 px-3 py-2.5 text-xs font-bold text-slate-400 hover:text-white">EN</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- #9 Final Call for Boarding (With Name) -->
-      <div class="ann-card rounded-2xl border border-slate-800 bg-slate-900/90 shadow-lg transition-all" data-ann-id="9">
-        <div class="ann-header flex cursor-pointer items-center justify-between p-3.5">
-          <div class="flex items-center gap-3">
-            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-lime-400/10 text-xs font-black text-lime-400 border border-lime-400/20">#9</span>
-            <div>
-              <h2 class="text-sm font-bold text-white">Final Call with Name</h2>
-              <p class="text-[11px] text-slate-400">미탑승 승객 최종 개별 호출</p>
-            </div>
-          </div>
-          <svg class="chevron h-4 w-4 text-slate-500 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
-        </div>
-        <div class="accordion-content">
-          <div class="border-t border-slate-800/80 bg-slate-950/50 p-4">
-            <div class="mb-3 space-y-2 rounded-xl border border-slate-800/80 bg-slate-900/40 p-3">
-              <label class="block text-xs font-bold text-slate-400">미탑승 승객 성명</label>
-              <textarea class="input-names w-full rounded-lg border border-slate-700 bg-slate-900 p-2 text-xs text-white placeholder-slate-500 outline-none focus:border-lime-400" rows="1" placeholder="예: PARK JIMIN"></textarea>
-              <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
-                <button class="btn-trans rounded-lg border border-lime-400/40 bg-lime-400/10 px-2.5 py-1 text-xs font-bold text-lime-400 hover:bg-lime-400/20">한글 발음 번역</button>
-                <div class="flex items-center gap-3">
-                  <div class="flex items-center gap-1.5 text-xs text-slate-400 font-bold">
-                    <span>Gate:</span>
-                    <input type="number" class="input-gate w-12 rounded-lg border border-slate-700 bg-slate-900 p-1 text-center text-xs font-bold text-white outline-none focus:border-lime-400" value="3" min="1" max="10">
-                  </div>
-                  <div class="flex items-center gap-1 text-xs text-slate-400 font-bold">
-                    <span>반복:</span>
-                    <div class="repeat-ctrl flex items-center rounded-lg border border-slate-700 bg-slate-900">
-                      <button class="btn-repeat-minus px-2 py-0.5 text-slate-300">-</button>
-                      <span class="repeat-val px-1 text-lime-400 font-black" data-repeat="2">2</span>
-                      <button class="btn-repeat-plus px-2 py-0.5 text-slate-300">+</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="script-box rounded-xl border border-slate-800 bg-slate-900/90 p-3 text-sm leading-relaxed text-slate-200" data-template="진에어 {destination}행 {flightNumber}편 최종 탑승 안내입니다. 아직 탑승하지 않으신 {names} 승객께서는 지금 즉시 {gate} 탑승구로 와 주시기 바랍니다."></div>
-            <div class="tooltip-en hidden mt-2 rounded-lg border-l-2 border-lime-400 bg-slate-900/60 p-2.5 text-xs italic text-slate-400" data-en-template="Final boarding call for Jin Air flight {flightNumber} to {destEn}. Missing passenger {namesEn}, please proceed immediately to Gate {gateNum}."></div>
-            <div class="mt-3 flex items-center gap-2">
-              <button class="btn-play flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-lime-400 py-2.5 text-xs font-black text-slate-950 transition active:scale-95 hover:bg-lime-300">
-                <svg class="h-4 w-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                <span>재생</span>
-              </button>
-              <button class="btn-stop rounded-xl border border-rose-500/30 bg-rose-500/10 px-3.5 py-2.5 text-xs font-bold text-rose-400 transition hover:bg-rose-500/20">정지</button>
-              <button class="btn-en-toggle rounded-xl border border-slate-700 bg-slate-800 px-3 py-2.5 text-xs font-bold text-slate-400 hover:text-white">EN</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- #10 Gate CHG to #1~#7 -->
-      <div class="ann-card rounded-2xl border border-slate-800 bg-slate-900/90 shadow-lg transition-all" data-ann-id="10">
-        <div class="ann-header flex cursor-pointer items-center justify-between p-3.5">
-          <div class="flex items-center gap-3">
-            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-lime-400/10 text-xs font-black text-lime-400 border border-lime-400/20">#10</span>
-            <div>
-              <h2 class="text-sm font-bold text-white">Gate Change (#1 ~ #7)</h2>
-              <p class="text-[11px] text-slate-400">탑승구 변경 안내 (1층~3층)</p>
-            </div>
-          </div>
-          <svg class="chevron h-4 w-4 text-slate-500 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
-        </div>
-        <div class="accordion-content">
-          <div class="border-t border-slate-800/80 bg-slate-950/50 p-4">
-            <div class="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-800/80 bg-slate-900/40 p-3">
-              <div class="flex items-center gap-3">
-                <div class="flex items-center gap-1.5 text-xs text-slate-400 font-bold">
-                  <span>Floor:</span>
-                  <input type="number" class="input-floor w-12 rounded-lg border border-slate-700 bg-slate-900 p-1 text-center text-xs font-bold text-white outline-none focus:border-lime-400" value="1" min="1" max="3">
-                </div>
-                <div class="flex items-center gap-1.5 text-xs text-slate-400 font-bold">
-                  <span>Gate:</span>
-                  <input type="number" class="input-gate w-12 rounded-lg border border-slate-700 bg-slate-900 p-1 text-center text-xs font-bold text-white outline-none focus:border-lime-400" value="5" min="1" max="7">
-                </div>
-              </div>
-              <div class="flex items-center gap-1 text-xs text-slate-400 font-bold">
-                <span>반복:</span>
-                <div class="repeat-ctrl flex items-center rounded-lg border border-slate-700 bg-slate-900">
-                  <button class="btn-repeat-minus px-2 py-0.5 text-slate-300">-</button>
-                  <span class="repeat-val px-1 text-lime-400 font-black" data-repeat="2">2</span>
-                  <button class="btn-repeat-plus px-2 py-0.5 text-slate-300">+</button>
-                </div>
-              </div>
-            </div>
-            <div class="script-box rounded-xl border border-slate-800 bg-slate-900/90 p-3 text-sm leading-relaxed text-slate-200" data-template="탑승구 변경 안내 말씀드립니다. 진에어 {destination}행 {flightNumber}편의 탑승구가 {floorGate} 탑승구로 변경되었사오니 이용에 착오 없으시기 바랍니다."></div>
-            <div class="tooltip-en hidden mt-2 rounded-lg border-l-2 border-lime-400 bg-slate-900/60 p-2.5 text-xs italic text-slate-400" data-en-template="Gate change announcement. The departure gate for Jin Air flight {flightNumber} to {destEn} has been changed to Gate {gateNum} on the {floorNum} floor."></div>
-            <div class="mt-3 flex items-center gap-2">
-              <button class="btn-play flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-lime-400 py-2.5 text-xs font-black text-slate-950 transition active:scale-95 hover:bg-lime-300">
-                <svg class="h-4 w-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                <span>재생</span>
-              </button>
-              <button class="btn-stop rounded-xl border border-rose-500/30 bg-rose-500/10 px-3.5 py-2.5 text-xs font-bold text-rose-400 transition hover:bg-rose-500/20">정지</button>
-              <button class="btn-en-toggle rounded-xl border border-slate-700 bg-slate-800 px-3 py-2.5 text-xs font-bold text-slate-400 hover:text-white">EN</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- #11 Gate CHG to #8~#10 -->
-      <div class="ann-card rounded-2xl border border-slate-800 bg-slate-900/90 shadow-lg transition-all" data-ann-id="11">
-        <div class="ann-header flex cursor-pointer items-center justify-between p-3.5">
-          <div class="flex items-center gap-3">
-            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-lime-400/10 text-xs font-black text-lime-400 border border-lime-400/20">#11</span>
-            <div>
-              <h2 class="text-sm font-bold text-white">Gate Change (#8 ~ #10)</h2>
-              <p class="text-[11px] text-slate-400">7번 게이트 아래층 탑승구 변경 안내</p>
-            </div>
-          </div>
-          <svg class="chevron h-4 w-4 text-slate-500 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
-        </div>
-        <div class="accordion-content">
-          <div class="border-t border-slate-800/80 bg-slate-950/50 p-4">
-            <div class="mb-3 flex items-center justify-between rounded-xl border border-slate-800/80 bg-slate-900/40 p-3">
-              <label class="text-xs font-bold text-slate-400">변경 탑승구 선택:</label>
-              <select class="input-gate-select rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs font-bold text-white outline-none focus:border-lime-400">
-                <option value="8">8번 탑승구</option>
-                <option value="9">9번 탑승구</option>
-                <option value="10">10번 탑승구</option>
-              </select>
-            </div>
-            <div class="script-box rounded-xl border border-slate-800 bg-slate-900/90 p-3 text-sm leading-relaxed text-slate-200" data-template="탑승구 변경 안내 말씀드립니다. 진에어 {destination}행 {flightNumber}편의 탑승구가 7번 탑승구 아래층 {gate} 탑승구로 변경되었사오니 착오 없으시기 바랍니다."></div>
-            <div class="tooltip-en hidden mt-2 rounded-lg border-l-2 border-lime-400 bg-slate-900/60 p-2.5 text-xs italic text-slate-400" data-en-template="Gate change announcement. The departure gate for Jin Air flight {flightNumber} to {destEn} has been changed to Gate {gateNum} (lower level of Gate 7)."></div>
-            <div class="mt-3 flex items-center gap-2">
-              <button class="btn-play flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-lime-400 py-2.5 text-xs font-black text-slate-950 transition active:scale-95 hover:bg-lime-300">
-                <svg class="h-4 w-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                <span>재생</span>
-              </button>
-              <button class="btn-stop rounded-xl border border-rose-500/30 bg-rose-500/10 px-3.5 py-2.5 text-xs font-bold text-rose-400 transition hover:bg-rose-500/20">정지</button>
-              <button class="btn-en-toggle rounded-xl border border-slate-700 bg-slate-800 px-3 py-2.5 text-xs font-bold text-slate-400 hover:text-white">EN</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- #12 Power Banks Regulations (KR) -->
-      <div class="ann-card rounded-2xl border border-slate-800 bg-slate-900/90 shadow-lg transition-all" data-ann-id="12">
-        <div class="ann-header flex cursor-pointer items-center justify-between p-3.5">
-          <div class="flex items-center gap-3">
-            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-lime-400/10 text-xs font-black text-lime-400 border border-lime-400/20">#12</span>
-            <div>
-              <h2 class="text-sm font-bold text-white">Power Banks Regulations (KR)</h2>
-              <p class="text-[11px] text-slate-400">보조배터리 및 전자담배 수하물 금지 안내</p>
-            </div>
-          </div>
-          <svg class="chevron h-4 w-4 text-slate-500 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
-        </div>
-        <div class="accordion-content">
-          <div class="border-t border-slate-800/80 bg-slate-950/50 p-4">
-            <div class="script-box rounded-xl border border-slate-800 bg-slate-900/90 p-3 text-sm leading-relaxed text-slate-200" data-template="보조배터리 및 전자제품 기내 반입 안내 말씀드립니다. 리튬 배터리가 포함된 보조배터리와 전자담배는 부치는 짐인 위탁수하물로 보낼 수 없으며, 반드시 기내로 휴대하여 탑승하셔야 합니다."></div>
-            <div class="tooltip-en hidden mt-2 rounded-lg border-l-2 border-lime-400 bg-slate-900/60 p-2.5 text-xs italic text-slate-400" data-en-template="Regulations for power banks and electronics. Power banks containing lithium batteries and e-cigarettes are not permitted in checked baggage and must be carried in cabin baggage."></div>
-            <div class="mt-3 flex items-center gap-2">
-              <button class="btn-play flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-lime-400 py-2.5 text-xs font-black text-slate-950 transition active:scale-95 hover:bg-lime-300">
-                <svg class="h-4 w-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                <span>재생</span>
-              </button>
-              <button class="btn-stop rounded-xl border border-rose-500/30 bg-rose-500/10 px-3.5 py-2.5 text-xs font-bold text-rose-400 transition hover:bg-rose-500/20">정지</button>
-              <button class="btn-en-toggle rounded-xl border border-slate-700 bg-slate-800 px-3 py-2.5 text-xs font-bold text-slate-400 hover:text-white">EN</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- #13 Power Banks Regulations (EN) -->
-      <div class="ann-card rounded-2xl border border-slate-800 bg-slate-900/90 shadow-lg transition-all" data-ann-id="13">
-        <div class="ann-header flex cursor-pointer items-center justify-between p-3.5">
-          <div class="flex items-center gap-3">
-            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-lime-400/10 text-xs font-black text-lime-400 border border-lime-400/20">#13</span>
-            <div>
-              <h2 class="text-sm font-bold text-white">Power Banks Regulations (EN)</h2>
-              <p class="text-[11px] text-slate-400">외국인 대상 영문 전용 안내</p>
-            </div>
-          </div>
-          <svg class="chevron h-4 w-4 text-slate-500 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
-        </div>
-        <div class="accordion-content">
-          <div class="border-t border-slate-800/80 bg-slate-950/50 p-4">
-            <div class="script-box rounded-xl border border-slate-800 bg-slate-900/90 p-3 text-sm leading-relaxed text-slate-200" data-template="Attention please, passengers traveling with Jin Air. Power banks and spare lithium batteries are strictly prohibited in checked baggage. Please carry all portable power banks and e-cigarettes in your carry-on baggage only. Thank you."></div>
-            <div class="mt-3 flex items-center gap-2">
-              <button class="btn-play flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-lime-400 py-2.5 text-xs font-black text-slate-950 transition active:scale-95 hover:bg-lime-300">
-                <svg class="h-4 w-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                <span>재생 (EN)</span>
-              </button>
-              <button class="btn-stop rounded-xl border border-rose-500/30 bg-rose-500/10 px-3.5 py-2.5 text-xs font-bold text-rose-400 transition hover:bg-rose-500/20">정지</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- #14 FLT DLY - A/C CONX (Disembarkation) -->
-      <div class="ann-card rounded-2xl border border-slate-800 bg-slate-900/90 shadow-lg transition-all" data-ann-id="14">
-        <div class="ann-header flex cursor-pointer items-center justify-between p-3.5">
-          <div class="flex items-center gap-3">
-            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-lime-400/10 text-xs font-black text-lime-400 border border-lime-400/20">#14</span>
-            <div>
-              <h2 class="text-sm font-bold text-white">Flight Delay – Disembarkation</h2>
-              <p class="text-[11px] text-slate-400">전편 도착 지연 및 승객 하기로 인한 지연</p>
-            </div>
-          </div>
-          <svg class="chevron h-4 w-4 text-slate-500 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
-        </div>
-        <div class="accordion-content">
-          <div class="border-t border-slate-800/80 bg-slate-950/50 p-4">
-            <div class="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-800/80 bg-slate-900/40 p-3">
-              <div class="flex items-center gap-2 text-xs font-bold text-slate-400">
-                <span>지연:</span>
-                <input type="number" class="input-delay-hour w-12 rounded-lg border border-slate-700 bg-slate-900 p-1 text-center text-xs font-bold text-white outline-none focus:border-lime-400" value="1" min="0" max="12">
-                <span>시간</span>
-                <input type="number" class="input-delay-min w-12 rounded-lg border border-slate-700 bg-slate-900 p-1 text-center text-xs font-bold text-white outline-none focus:border-lime-400" value="30" min="0" max="59" step="5">
-                <span>분</span>
-              </div>
-              <div class="flex items-center gap-1 text-xs text-slate-400 font-bold">
-                <span>반복:</span>
-                <div class="repeat-ctrl flex items-center rounded-lg border border-slate-700 bg-slate-900">
-                  <button class="btn-repeat-minus px-2 py-0.5 text-slate-300">-</button>
-                  <span class="repeat-val px-1 text-lime-400 font-black" data-repeat="2">2</span>
-                  <button class="btn-repeat-plus px-2 py-0.5 text-slate-300">+</button>
-                </div>
-              </div>
-            </div>
-            <div class="script-box rounded-xl border border-slate-800 bg-slate-900/90 p-3 text-sm leading-relaxed text-slate-200" data-template="항공기 연결 문제로 인한 출발 지연 안내 말씀드립니다. 진에어 {destination}행 {flightNumber}편은 전편 항공기의 도착 지연 및 승객 하기 작업으로 인해 출발이 약 {delayTime} 지연될 예정입니다. 손님 여러분의 양해를 부탁드립니다."></div>
-            <div class="tooltip-en hidden mt-2 rounded-lg border-l-2 border-lime-400 bg-slate-900/60 p-2.5 text-xs italic text-slate-400" data-en-template="Flight delay notice. Jin Air flight {flightNumber} to {destEn} is delayed by approximately {delayTimeEn} due to late arrival of incoming aircraft."></div>
-            <div class="mt-3 flex items-center gap-2">
-              <button class="btn-play flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-lime-400 py-2.5 text-xs font-black text-slate-950 transition active:scale-95 hover:bg-lime-300">
-                <svg class="h-4 w-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                <span>재생</span>
-              </button>
-              <button class="btn-stop rounded-xl border border-rose-500/30 bg-rose-500/10 px-3.5 py-2.5 text-xs font-bold text-rose-400 transition hover:bg-rose-500/20">정지</button>
-              <button class="btn-en-toggle rounded-xl border border-slate-700 bg-slate-800 px-3 py-2.5 text-xs font-bold text-slate-400 hover:text-white">EN</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- #15 FLT DLY – Cabin Preparation -->
-      <div class="ann-card rounded-2xl border border-slate-800 bg-slate-900/90 shadow-lg transition-all" data-ann-id="15">
-        <div class="ann-header flex cursor-pointer items-center justify-between p-3.5">
-          <div class="flex items-center gap-3">
-            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-lime-400/10 text-xs font-black text-lime-400 border border-lime-400/20">#15</span>
-            <div>
-              <h2 class="text-sm font-bold text-white">Flight Delay – Cabin Prep</h2>
-              <p class="text-[11px] text-slate-400">객실 준비 작업으로 인한 출발 지연</p>
-            </div>
-          </div>
-          <svg class="chevron h-4 w-4 text-slate-500 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
-        </div>
-        <div class="accordion-content">
-          <div class="border-t border-slate-800/80 bg-slate-950/50 p-4">
-            <div class="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-800/80 bg-slate-900/40 p-3">
-              <div class="flex items-center gap-2 text-xs font-bold text-slate-400">
-                <span>지연:</span>
-                <input type="number" class="input-delay-hour w-12 rounded-lg border border-slate-700 bg-slate-900 p-1 text-center text-xs font-bold text-white outline-none focus:border-lime-400" value="0" min="0" max="12">
-                <span>시간</span>
-                <input type="number" class="input-delay-min w-12 rounded-lg border border-slate-700 bg-slate-900 p-1 text-center text-xs font-bold text-white outline-none focus:border-lime-400" value="40" min="0" max="59" step="5">
-                <span>분</span>
-              </div>
-              <div class="flex items-center gap-1 text-xs text-slate-400 font-bold">
-                <span>반복:</span>
-                <div class="repeat-ctrl flex items-center rounded-lg border border-slate-700 bg-slate-900">
-                  <button class="btn-repeat-minus px-2 py-0.5 text-slate-300">-</button>
-                  <span class="repeat-val px-1 text-lime-400 font-black" data-repeat="2">2</span>
-                  <button class="btn-repeat-plus px-2 py-0.5 text-slate-300">+</button>
-                </div>
-              </div>
-            </div>
-            <div class="script-box rounded-xl border border-slate-800 bg-slate-900/90 p-3 text-sm leading-relaxed text-slate-200" data-template="항공기 출발 지연 안내 말씀드립니다. 진에어 {destination}행 {flightNumber}편은 기내 정비 및 객실 준비 작업으로 인해 출발이 약 {delayTime} 지연될 예정입니다. 승객 여러분의 너른 양해 부탁드립니다."></div>
-            <div class="tooltip-en hidden mt-2 rounded-lg border-l-2 border-lime-400 bg-slate-900/60 p-2.5 text-xs italic text-slate-400" data-en-template="Flight delay notice. Jin Air flight {flightNumber} to {destEn} is delayed by approximately {delayTimeEn} due to cabin preparation."></div>
-            <div class="mt-3 flex items-center gap-2">
-              <button class="btn-play flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-lime-400 py-2.5 text-xs font-black text-slate-950 transition active:scale-95 hover:bg-lime-300">
-                <svg class="h-4 w-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                <span>재생</span>
-              </button>
-              <button class="btn-stop rounded-xl border border-rose-500/30 bg-rose-500/10 px-3.5 py-2.5 text-xs font-bold text-rose-400 transition hover:bg-rose-500/20">정지</button>
-              <button class="btn-en-toggle rounded-xl border border-slate-700 bg-slate-800 px-3 py-2.5 text-xs font-bold text-slate-400 hover:text-white">EN</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Free Form (Custom Announcement) -->
-      <div class="ann-card rounded-2xl border border-slate-800 bg-slate-900/90 shadow-lg transition-all" data-ann-id="free">
-        <div class="ann-header flex cursor-pointer items-center justify-between p-3.5">
-          <div class="flex items-center gap-3">
-            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-cyan-400/10 text-xs font-black text-cyan-400 border border-cyan-400/20">자유</span>
-            <div>
-              <h2 class="text-sm font-bold text-white">Custom Free-form</h2>
-              <p class="text-[11px] text-slate-400">자유 문장 직접 입력 및 방송</p>
-            </div>
-          </div>
-          <svg class="chevron h-4 w-4 text-slate-500 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
-        </div>
-        <div class="accordion-content">
-          <div class="border-t border-slate-800/80 bg-slate-950/50 p-4">
-            <textarea id="inputFreeText" class="w-full rounded-xl border border-slate-700 bg-slate-900 p-3 text-sm text-white placeholder-slate-500 outline-none focus:border-cyan-400" rows="3" placeholder="방송할 한국어 또는 영어 문장을 직접 입력해 주세요."></textarea>
-            <div class="mt-3 flex items-center gap-2">
-              <button class="btn-play flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-cyan-400 py-2.5 text-xs font-black text-slate-950 transition active:scale-95 hover:bg-cyan-300 glow-cyan">
-                <svg class="h-4 w-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                <span>재생</span>
-              </button>
-              <button class="btn-stop rounded-xl border border-rose-500/30 bg-rose-500/10 px-3.5 py-2.5 text-xs font-bold text-rose-400 transition hover:bg-rose-500/20">정지</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
+      <span class="chevron">▼</span>
     </div>
-  </main>
+    <div class="ann-body">
+      <div class="inputs-wrap">
+        <div class="input-field" style="width: 100%;">
+          <textarea class="input-names" placeholder="승객 성명 (예: LEE YOUNGHEE)"></textarea>
+        </div>
+        <div class="input-field">
+          <button class="btn-action-small btn-trans">한글 발음 번역</button>
+        </div>
+        <div class="input-field" style="margin-left: auto;">
+          <label>이름 반복:</label>
+          <div class="repeat-ctrl">
+            <button class="repeat-btn minus">-</button>
+            <span class="repeat-val" data-repeat="2">2</span>
+            <button class="repeat-btn plus">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="script-box" data-template="진에어에서 위탁수하물 확인 안내 말씀드립니다. {names} 승객께서는 즉시 진에어 체크인 카운터로 오셔서 위탁수하물을 확인해 주시기 바랍니다."></div>
+      <div class="tooltip-en-box" data-en-template="Jin Air baggage inspection announcement. Passenger {namesEn}, please proceed to the Jin Air check-in counter immediately for baggage inspection."></div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill"></div></div>
+      <div class="controls-row">
+        <button class="btn-play">▶ 재생</button>
+        <button class="btn-stop">■ 정지</button>
+        <button class="btn-en-toggle">EN</button>
+      </div>
+    </div>
+  </div>
 
-  <footer class="mt-8 text-center text-[11px] text-slate-500">
-    <p class="font-bold text-slate-400">JIN AIR TAG STATION ANNOUNCEMENT PLAYER</p>
-    <p>Bohol-Panglao International Airport (TAG) Ground Operations</p>
-    <p class="mt-1 text-[10px] text-slate-600">Ver. 2026.10 (Single Standalone Edition with Full Design)</p>
-  </footer>
+  <!-- #4 Congested, proceed to IMMG -->
+  <div class="ann-card" data-ann-id="4">
+    <div class="ann-header">
+      <div class="ann-title-wrap">
+        <div class="ann-icon"><svg viewBox="0 0 24 24"><path d="M14 6l-3.75 5 2.85 3.8-1.6 1.2C9.81 13.75 7 10 7 10l-6 8h22L14 6z"/></svg></div>
+        <span class="ann-num">#4</span>
+        <span class="ann-title">Congested, please proceed to IMMG now</span>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="ann-body">
+      <div class="script-box" data-template="공항 내 출국 심사장이 매우 혼잡하오니, 탑승수속을 마치신 승객께서는 지체 없이 출국 심사장으로 이동하여 주시기 바랍니다."></div>
+      <div class="tooltip-en-box" data-en-template="The immigration checkpoint is very crowded. Passengers who have completed check-in, please proceed to immigration immediately."></div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill"></div></div>
+      <div class="controls-row">
+        <button class="btn-play">▶ 재생</button>
+        <button class="btn-stop">■ 정지</button>
+        <button class="btn-en-toggle">EN</button>
+      </div>
+    </div>
+  </div>
 
-  <!-- ==================== JAVASCRIPT LOGIC (버그 완벽 수정본) ==================== -->
-  <script>
-    // --- 1. 전역 상태 및 데이터 ---
-    const STATE = {
-      flight: localStorage.getItem('lj_flight') || 'LJ044',
-      dest: localStorage.getItem('lj_dest') || 'ICN',
-      voiceKo: localStorage.getItem('lj_voice_ko') || '',
-      voiceEn: localStorage.getItem('lj_voice_en') || '',
-      speed: 1.0,
-      pitch: 1.0,
-      isPlaying: false,
-      currentCard: null,
-      wakeLock: null
-    };
+  <!-- #5 Pre-BRDG (PAX who need assistance) -->
+  <div class="ann-card" data-ann-id="5">
+    <div class="ann-header">
+      <div class="ann-title-wrap">
+        <div class="ann-icon"><svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 100 6 3 3 0 000-6zm3 7H9c-1.1 0-2 .9-2 2v7h2v5h6v-5h2v-7c0-1.1-.9-2-2-2z"/></svg></div>
+        <span class="ann-num">#5</span>
+        <span class="ann-title">Pre-BRDG (PAX who need assistance)</span>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="ann-body">
+      <div class="script-box" data-template="진에어 {destination}행 {flightNumber}편 탑승을 시작하겠습니다. 노약자, 임산부, 유아 동반 승객 등 도움이 필요하신 승객께서는 먼저 탑승하여 주시기 바랍니다."></div>
+      <div class="tooltip-en-box" data-en-template="Jin Air flight {flightNumber} to {destEn} is now ready for pre-boarding. Passengers needing assistance, elderly, pregnant women, and passengers with infants, please board first."></div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill"></div></div>
+      <div class="controls-row">
+        <button class="btn-play">▶ 재생</button>
+        <button class="btn-stop">■ 정지</button>
+        <button class="btn-en-toggle">EN</button>
+      </div>
+    </div>
+  </div>
 
-    const AIRPORT_NAMES = {
-      ICN: { ko: '인천', en: 'Incheon' },
-      PUS: { ko: '부산', en: 'Busan' }
-    };
+  <!-- #6 Commence Boarding (General) -->
+  <div class="ann-card" data-ann-id="6">
+    <div class="ann-header">
+      <div class="ann-title-wrap">
+        <div class="ann-icon"><svg viewBox="0 0 24 24"><path d="M2.5 19h19v2h-19v-2zm19.57-9.36c-.21-.8-1.04-1.28-1.84-1.06L14.92 10 8.46 3.99 6.34 4.55l3.81 6.55L5.27 12.5l-2.03-.66-1.57.42 2.65 4.3 17.75-4.92z"/></svg></div>
+        <span class="ann-num">#6</span>
+        <span class="ann-title">Commence Boarding (General)</span>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="ann-body">
+      <div class="inputs-wrap">
+        <div class="input-field">
+          <label>탑승구 Gate#:</label>
+          <input type="number" class="input-gate" value="3" min="1" max="10" style="width: 60px;">
+        </div>
+        <div class="input-field" style="margin-left: auto;">
+          <label>게이트 반복:</label>
+          <div class="repeat-ctrl">
+            <button class="repeat-btn minus">-</button>
+            <span class="repeat-val" data-repeat="2">2</span>
+            <button class="repeat-btn plus">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="script-box" data-template="진에어 {destination}행 {flightNumber}편 탑승을 시작하겠습니다. 탑승권을 소지하신 승객께서는 {gate} 탑승구로 탑승하여 주시기 바랍니다."></div>
+      <div class="tooltip-en-box" data-en-template="Jin Air flight {flightNumber} to {destEn} is now boarding. All passengers with boarding passes please proceed to Gate {gateNum} for boarding."></div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill"></div></div>
+      <div class="controls-row">
+        <button class="btn-play">▶ 재생</button>
+        <button class="btn-stop">■ 정지</button>
+        <button class="btn-en-toggle">EN</button>
+      </div>
+    </div>
+  </div>
 
-    // LJ044 -> "엘제이, 공, 사, 사"
-    function getFlightSpokenKorean(flightCode) {
-      const charMap = {
-        'L': '엘', 'J': '제이',
-        '0': '공', '1': '일', '2': '이', '3': '삼', '4': '사',
-        '5': '오', '6': '육', '7': '칠', '8': '팔', '9': '구'
-      };
-      return flightCode.split('').map(c => charMap[c] || c).join(', ');
-    }
+  <!-- #7 In the middle of Boarding -->
+  <div class="ann-card" data-ann-id="7">
+    <div class="ann-header">
+      <div class="ann-title-wrap">
+        <div class="ann-icon"><svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0020 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 004 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg></div>
+        <span class="ann-num">#7</span>
+        <span class="ann-title">In the middle of Boarding</span>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="ann-body">
+      <div class="inputs-wrap">
+        <div class="input-field">
+          <label>탑승구 Gate#:</label>
+          <input type="number" class="input-gate" value="3" min="1" max="10" style="width: 60px;">
+        </div>
+        <div class="input-field" style="margin-left: auto;">
+          <label>게이트 반복:</label>
+          <div class="repeat-ctrl">
+            <button class="repeat-btn minus">-</button>
+            <span class="repeat-val" data-repeat="2">2</span>
+            <button class="repeat-btn plus">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="script-box" data-template="진에어 {destination}행 {flightNumber}편 탑승이 진행 중입니다. 아직 탑승하지 않으신 승객께서는 신속히 {gate} 탑승구로 이동해 주시기 바랍니다."></div>
+      <div class="tooltip-en-box" data-en-template="Jin Air flight {flightNumber} to {destEn} is now boarding. Remaining passengers please proceed quickly to Gate {gateNum}."></div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill"></div></div>
+      <div class="controls-row">
+        <button class="btn-play">▶ 재생</button>
+        <button class="btn-stop">■ 정지</button>
+        <button class="btn-en-toggle">EN</button>
+      </div>
+    </div>
+  </div>
 
-    // --- 2. 화면 문구 실시간 조립 함수 (Bug 7-1 원천 차단) ---
-    // data-template을 절대 덮어쓰지 않고 항상 읽어와서 치환본만 화면에 표시
-    function updateAllAnnouncementTexts() {
-      const flightKo = getFlightSpokenKorean(STATE.flight);
-      const destKo = AIRPORT_NAMES[STATE.dest].ko;
-      const destEn = AIRPORT_NAMES[STATE.dest].en;
+  <!-- #8 Final Call for Boarding -->
+  <div class="ann-card" data-ann-id="8">
+    <div class="ann-header">
+      <div class="ann-title-wrap">
+        <div class="ann-icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z"/></svg></div>
+        <span class="ann-num">#8</span>
+        <span class="ann-title">Final Call for Boarding</span>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="ann-body">
+      <div class="inputs-wrap">
+        <div class="input-field">
+          <label>탑승구 Gate#:</label>
+          <input type="number" class="input-gate" value="3" min="1" max="10" style="width: 60px;">
+        </div>
+        <div class="input-field" style="margin-left: auto;">
+          <label>게이트 반복:</label>
+          <div class="repeat-ctrl">
+            <button class="repeat-btn minus">-</button>
+            <span class="repeat-val" data-repeat="2">2</span>
+            <button class="repeat-btn plus">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="script-box" data-template="진에어 {destination}행 {flightNumber}편 최종 탑승 안내입니다. 곧 출입문을 닫을 예정이오니, 탑승하지 않으신 승객께서는 즉시 {gate} 탑승구로 와 주시기 바랍니다."></div>
+      <div class="tooltip-en-box" data-en-template="Final boarding call for Jin Air flight {flightNumber} to {destEn}. The doors will close shortly. Passengers please proceed immediately to Gate {gateNum}."></div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill"></div></div>
+      <div class="controls-row">
+        <button class="btn-play">▶ 재생</button>
+        <button class="btn-stop">■ 정지</button>
+        <button class="btn-en-toggle">EN</button>
+      </div>
+    </div>
+  </div>
 
-      document.querySelectorAll('.ann-card').forEach(card => {
-        const scriptBox = card.querySelector('.script-box');
-        const tooltipEn = card.querySelector('.tooltip-en');
-        if (!scriptBox) return;
+  <!-- #9 Final Call for Boarding (With Name) -->
+  <div class="ann-card" data-ann-id="9">
+    <div class="ann-header">
+      <div class="ann-title-wrap">
+        <div class="ann-icon"><svg viewBox="0 0 24 24"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
+        <span class="ann-num">#9</span>
+        <span class="ann-title">Final Call for Boarding (With Name)</span>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="ann-body">
+      <div class="inputs-wrap">
+        <div class="input-field" style="width: 100%;">
+          <textarea class="input-names" placeholder="미탑승 승객 성명 (예: PARK JIMIN)"></textarea>
+        </div>
+        <div class="input-field">
+          <button class="btn-action-small btn-trans">한글 발음 번역</button>
+        </div>
+        <div class="input-field">
+          <label>이름반복:</label>
+          <div class="repeat-ctrl">
+            <button class="repeat-btn minus">-</button>
+            <span class="repeat-val" data-repeat="2">2</span>
+            <button class="repeat-btn plus">+</button>
+          </div>
+        </div>
+        <div class="input-field">
+          <label>Gate#:</label>
+          <input type="number" class="input-gate" value="3" min="1" max="10" style="width: 50px;">
+        </div>
+      </div>
+      <div class="script-box" data-template="진에어 {destination}행 {flightNumber}편 최종 탑승 안내입니다. 아직 탑승하지 않으신 {names} 승객께서는 지금 즉시 {gate} 탑승구로 와 주시기 바랍니다."></div>
+      <div class="tooltip-en-box" data-en-template="Final boarding call for Jin Air flight {flightNumber} to {destEn}. Missing passenger {namesEn}, please proceed immediately to Gate {gateNum}."></div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill"></div></div>
+      <div class="controls-row">
+        <button class="btn-play">▶ 재생</button>
+        <button class="btn-stop">■ 정지</button>
+        <button class="btn-en-toggle">EN</button>
+      </div>
+    </div>
+  </div>
 
-        const baseTemplate = scriptBox.dataset.template;
-        if (!baseTemplate) return;
+  <!-- #10 Gate CHG to #1~#7 -->
+  <div class="ann-card" data-ann-id="10">
+    <div class="ann-header">
+      <div class="ann-title-wrap">
+        <div class="ann-icon"><svg viewBox="0 0 24 24"><path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"/></svg></div>
+        <span class="ann-num">#10</span>
+        <span class="ann-title">Gate CHG to #1~#7</span>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="ann-body">
+      <div class="inputs-wrap">
+        <div class="input-field">
+          <label>층수 Floor:</label>
+          <input type="number" class="input-floor" value="1" min="1" max="3" style="width: 50px;">
+        </div>
+        <div class="input-field">
+          <label>Gate#:</label>
+          <input type="number" class="input-gate" value="5" min="1" max="7" style="width: 50px;">
+        </div>
+        <div class="input-field" style="margin-left: auto;">
+          <label>반복:</label>
+          <div class="repeat-ctrl">
+            <button class="repeat-btn minus">-</button>
+            <span class="repeat-val" data-repeat="2">2</span>
+            <button class="repeat-btn plus">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="script-box" data-template="탑승구 변경 안내 말씀드립니다. 진에어 {destination}행 {flightNumber}편의 탑승구가 {floorGate} 탑승구로 변경되었사오니 이용에 착오 없으시기 바랍니다."></div>
+      <div class="tooltip-en-box" data-en-template="Gate change announcement. The departure gate for Jin Air flight {flightNumber} to {destEn} has been changed to Gate {gateNum} on the {floorNum} floor."></div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill"></div></div>
+      <div class="controls-row">
+        <button class="btn-play">▶ 재생</button>
+        <button class="btn-stop">■ 정지</button>
+        <button class="btn-en-toggle">EN</button>
+      </div>
+    </div>
+  </div>
 
-        let renderedText = baseTemplate
-          .replaceAll('{flightNumber}', flightKo)
-          .replaceAll('{destination}', destKo);
+  <!-- #11 Gate CHG to #8~#10 -->
+  <div class="ann-card" data-ann-id="11">
+    <div class="ann-header">
+      <div class="ann-title-wrap">
+        <div class="ann-icon"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l5.59-5.59L19 10l-7 7z"/></svg></div>
+        <span class="ann-num">#11</span>
+        <span class="ann-title">Gate CHG to #8~#10 (Lower floor)</span>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="ann-body">
+      <div class="inputs-wrap">
+        <div class="input-field">
+          <label>변경 탑승구 선택:</label>
+          <select class="input-gate-select">
+            <option value="8">8번 탑승구</option>
+            <option value="9">9번 탑승구</option>
+            <option value="10">10번 탑승구</option>
+          </select>
+        </div>
+      </div>
+      <div class="script-box" data-template="탑승구 변경 안내 말씀드립니다. 진에어 {destination}행 {flightNumber}편의 탑승구가 7번 탑승구 아래층 {gate} 탑승구로 변경되었사오니 착오 없으시기 바랍니다."></div>
+      <div class="tooltip-en-box" data-en-template="Gate change announcement. The departure gate for Jin Air flight {flightNumber} to {destEn} has been changed to Gate {gateNum} (lower level of Gate 7)."></div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill"></div></div>
+      <div class="controls-row">
+        <button class="btn-play">▶ 재생</button>
+        <button class="btn-stop">■ 정지</button>
+        <button class="btn-en-toggle">EN</button>
+      </div>
+    </div>
+  </div>
 
-        // 카드별 입력 필드 값 반영
-        const gateInput = card.querySelector('.input-gate');
-        const gateSelect = card.querySelector('.input-gate-select');
-        const floorInput = card.querySelector('.input-floor');
-        const nameInput = card.querySelector('.input-names');
-        const hourInput = card.querySelector('.input-delay-hour');
-        const minInput = card.querySelector('.input-delay-min');
-        const repeatValEl = card.querySelector('.repeat-val');
+  <!-- #12 Power Banks Regulations (KR) -->
+  <div class="ann-card" data-ann-id="12">
+    <div class="ann-header">
+      <div class="ann-title-wrap">
+        <div class="ann-icon"><svg viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4zM11 20v-5.5H9L13 7v5.5h2L11 20z"/></svg></div>
+        <span class="ann-num">#12</span>
+        <span class="ann-title">Power Banks Onboard Regulations (KR)</span>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="ann-body">
+      <div class="script-box" data-template="보조배터리 및 전자제품 기내 반입 안내 말씀드립니다. 리튬 배터리가 포함된 보조배터리와 전자담배는 부치는 짐인 위탁수하물로 보낼 수 없으며, 반드시 기내로 휴대하여 탑승하셔야 합니다."></div>
+      <div class="tooltip-en-box" data-en-template="Regulations for power banks and electronics. Power banks containing lithium batteries and e-cigarettes are not permitted in checked baggage and must be carried in cabin baggage."></div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill"></div></div>
+      <div class="controls-row">
+        <button class="btn-play">▶ 재생</button>
+        <button class="btn-stop">■ 정지</button>
+        <button class="btn-en-toggle">EN</button>
+      </div>
+    </div>
+  </div>
 
-        const repeatCount = repeatValEl ? parseInt(repeatValEl.textContent.trim(), 10) : 2;
+  <!-- #13 Power Banks Regulations (EN Only) -->
+  <div class="ann-card" data-ann-id="13">
+    <div class="ann-header">
+      <div class="ann-title-wrap">
+        <div class="ann-icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg></div>
+        <span class="ann-num">#13</span>
+        <span class="ann-title">Power Banks Onboard Regulations (EN)</span>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="ann-body">
+      <div class="script-box" data-template="Attention please, passengers traveling with Jin Air. Power banks and spare lithium batteries are strictly prohibited in checked baggage. Please carry all portable power banks and e-cigarettes in your carry-on baggage only. Thank you."></div>
+      <div class="tooltip-en-box" data-en-template="This announcement is spoken purely in English for foreign passengers."></div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill"></div></div>
+      <div class="controls-row">
+        <button class="btn-play">▶ 재생</button>
+        <button class="btn-stop">■ 정지</button>
+        <button class="btn-en-toggle">EN</button>
+      </div>
+    </div>
+  </div>
 
-        if (gateInput) {
-          const gVal = gateInput.value || '3';
-          const repeatedGate = Array(repeatCount).fill(`${gVal}번`).join(', ');
-          renderedText = renderedText.replaceAll('{gate}', repeatedGate);
-        }
+  <!-- #14 FLT DLY - A/C CONX (Disembarkation) -->
+  <div class="ann-card" data-ann-id="14">
+    <div class="ann-header">
+      <div class="ann-title-wrap">
+        <div class="ann-icon"><svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg></div>
+        <span class="ann-num">#14</span>
+        <span class="ann-title">FLT DLY – A/C CONX (Disembarkation)</span>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="ann-body">
+      <div class="inputs-wrap">
+        <div class="input-field">
+          <label>지연 시간:</label>
+          <input type="number" class="input-delay-hour" value="1" min="0" max="12" style="width: 45px;"> 시간
+        </div>
+        <div class="input-field">
+          <input type="number" class="input-delay-min" value="30" min="0" max="59" step="5" style="width: 50px;"> 분
+        </div>
+        <div class="input-field" style="margin-left: auto;">
+          <label>반복:</label>
+          <div class="repeat-ctrl">
+            <button class="repeat-btn minus">-</button>
+            <span class="repeat-val" data-repeat="2">2</span>
+            <button class="repeat-btn plus">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="script-box" data-template="항공기 연결 문제로 인한 출발 지연 안내 말씀드립니다. 진에어 {destination}행 {flightNumber}편은 전편 항공기의 도착 지연 및 승객 하기 작업으로 인해 출발이 약 {delayTime} 지연될 예정입니다. 손님 여러분의 양해를 부탁드립니다."></div>
+      <div class="tooltip-en-box" data-en-template="Flight delay notice. Jin Air flight {flightNumber} to {destEn} is delayed by approximately {delayTimeEn} due to late arrival of incoming aircraft."></div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill"></div></div>
+      <div class="controls-row">
+        <button class="btn-play">▶ 재생</button>
+        <button class="btn-stop">■ 정지</button>
+        <button class="btn-en-toggle">EN</button>
+      </div>
+    </div>
+  </div>
 
-        if (gateSelect) {
-          const gVal = gateSelect.value || '8';
-          renderedText = renderedText.replaceAll('{gate}', `${gVal}번`);
-        }
+  <!-- #15 FLT DLY – A/C CONX (Cabin prep) -->
+  <div class="ann-card" data-ann-id="15">
+    <div class="ann-header">
+      <div class="ann-title-wrap">
+        <div class="ann-icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></div>
+        <span class="ann-num">#15</span>
+        <span class="ann-title">FLT DLY – Cabin Preparation</span>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="ann-body">
+      <div class="inputs-wrap">
+        <div class="input-field">
+          <label>지연 시간:</label>
+          <input type="number" class="input-delay-hour" value="0" min="0" max="12" style="width: 45px;"> 시간
+        </div>
+        <div class="input-field">
+          <input type="number" class="input-delay-min" value="40" min="0" max="59" step="5" style="width: 50px;"> 분
+        </div>
+        <div class="input-field" style="margin-left: auto;">
+          <label>반복:</label>
+          <div class="repeat-ctrl">
+            <button class="repeat-btn minus">-</button>
+            <span class="repeat-val" data-repeat="2">2</span>
+            <button class="repeat-btn plus">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="script-box" data-template="항공기 출발 지연 안내 말씀드립니다. 진에어 {destination}행 {flightNumber}편은 기내 정비 및 객실 준비 작업으로 인해 출발이 약 {delayTime} 지연될 예정입니다. 승객 여러분의 너른 양해 부탁드립니다."></div>
+      <div class="tooltip-en-box" data-en-template="Flight delay notice. Jin Air flight {flightNumber} to {destEn} is delayed by approximately {delayTimeEn} due to cabin preparation."></div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill"></div></div>
+      <div class="controls-row">
+        <button class="btn-play">▶ 재생</button>
+        <button class="btn-stop">■ 정지</button>
+        <button class="btn-en-toggle">EN</button>
+      </div>
+    </div>
+  </div>
 
-        if (floorInput && gateInput) {
-          const fVal = floorInput.value || '1';
-          const gVal = gateInput.value || '5';
-          const repeatedFloorGate = Array(repeatCount).fill(`${fVal}층 ${gVal}번`).join(', ');
-          renderedText = renderedText.replaceAll('{floorGate}', repeatedFloorGate);
-        }
+  <!-- Custom Free-form -->
+  <div class="ann-card" data-ann-id="custom">
+    <div class="ann-header">
+      <div class="ann-title-wrap">
+        <div class="ann-icon"><svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></div>
+        <span class="ann-num">Free</span>
+        <span class="ann-title">Custom Announcement (자유 입력)</span>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="ann-body">
+      <div class="input-field" style="width: 100%; margin-bottom: 12px;">
+        <textarea id="customTextInput" style="width: 100%; min-height: 80px;" placeholder="방송할 한국어 또는 영어 문장을 직접 입력하세요."></textarea>
+      </div>
+      <div class="script-box" id="customScriptBox" style="display: none;"></div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill"></div></div>
+      <div class="controls-row">
+        <button class="btn-play">▶ 재생</button>
+        <button class="btn-stop">■ 정지</button>
+      </div>
+    </div>
+  </div>
 
-        if (nameInput) {
-          const names = nameInput.value.trim();
-          if (names) {
-            const repeatedNames = Array(repeatCount).fill(names).join(', ');
-            renderedText = renderedText.replaceAll('{names}', repeatedNames);
-          } else {
-            renderedText = renderedText.replaceAll('{names}', '[승객 성명]');
-          }
-        }
+</div>
 
-        if (hourInput && minInput) {
-          const h = parseInt(hourInput.value || 0, 10);
-          const m = parseInt(minInput.value || 0, 10);
-          let delayStr = '';
-          if (h > 0) delayStr += `${h}시간 `;
-          if (m > 0 || h === 0) delayStr += `${m}분`;
-          const repeatedDelay = Array(repeatCount).fill(delayStr.trim()).join(', ');
-          renderedText = renderedText.replaceAll('{delayTime}', repeatedDelay);
-        }
-
-        scriptBox.textContent = renderedText;
-
-        // 영문 툴팁 치환
-        if (tooltipEn && tooltipEn.dataset.enTemplate) {
-          let enText = tooltipEn.dataset.enTemplate
-            .replaceAll('{flightNumber}', STATE.flight)
-            .replaceAll('{destEn}', destEn);
-
-          if (gateInput) enText = enText.replaceAll('{gateNum}', gateInput.value || '3');
-          if (gateSelect) enText = enText.replaceAll('{gateNum}', gateSelect.value || '8');
-          if (floorInput) enText = enText.replaceAll('{floorNum}', floorInput.value || '1');
-          if (nameInput) enText = enText.replaceAll('{namesEn}', nameInput.value.trim() || '[Passenger Name]');
-          
-          if (hourInput && minInput) {
-            const h = parseInt(hourInput.value || 0, 10);
-            const m = parseInt(minInput.value || 0, 10);
-            let enDelay = '';
-            if (h > 0) enDelay += `${h} hour${h > 1 ? 's' : ''} `;
-            if (m > 0) enDelay += `${m} minutes`;
-            enText = enText.replaceAll('{delayTimeEn}', enDelay.trim() || 'scheduled time');
-          }
-
-          tooltipEn.textContent = enText;
-        }
-      });
-    }
-
-    // --- 3. Web Speech API 음성 엔진 관리 ---
-    let voices = [];
-
-    function populateVoiceList() {
-      if (!('speechSynthesis' in window)) return;
-      voices = window.speechSynthesis.getVoices();
-      if (!voices.length) return;
-
-      const selKo = document.getElementById('selectVoiceKo');
-      const selEn = document.getElementById('selectVoiceEn');
-      selKo.innerHTML = '';
-      selEn.innerHTML = '';
-
-      voices.forEach((v, i) => {
-        const opt = document.createElement('option');
-        opt.value = v.name;
-        opt.textContent = `${v.name} (${v.lang})`;
-
-        if (v.lang.startsWith('ko')) selKo.appendChild(opt.cloneNode(true));
-        if (v.lang.startsWith('en')) selEn.appendChild(opt.cloneNode(true));
-      });
-
-      // 기존 저장된 보이스 선택 복원 (또는 추천 기본값)
-      if (STATE.voiceKo && [...selKo.options].some(o => o.value === STATE.voiceKo)) {
-        selKo.value = STATE.voiceKo;
-      } else {
-        // iOS Yuna 또는 Google ko-KR 우선 선택
-        const pref = [...selKo.options].find(o => o.value.includes('Yuna') || o.value.includes('Korean') || o.value.includes('ko-KR'));
-        if (pref) selKo.value = pref.value;
-      }
-
-      if (STATE.voiceEn && [...selEn.options].some(o => o.value === STATE.voiceEn)) {
-        selEn.value = STATE.voiceEn;
-      } else {
-        const prefEn = [...selEn.options].find(o => o.value.includes('Samantha') || o.value.includes('en-US'));
-        if (prefEn) selEn.value = prefEn.value;
-      }
-    }
-
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.onvoiceschanged = populateVoiceList;
-      populateVoiceList();
-    }
-
-    // Keep-alive: 모바일 브라우저 음성 슬립 방지용 10초 무음 핑
-    setInterval(() => {
-      if (!STATE.isPlaying && 'speechSynthesis' in window) {
-        const silent = new SpeechSynthesisUtterance(' ');
-        silent.volume = 0.01;
-        window.speechSynthesis.speak(silent);
-      }
-    }, 10000);
-
-    // --- 4. 한/영 혼용 텍스트 분할 발화 엔진 (parseTextToSegments) ---
-    function parseTextToSegments(text) {
-      const segments = [];
-      const regex = /([a-zA-Z\s]+)|([^a-zA-Z]+)/g;
-      let match;
-      while ((match = regex.exec(text)) !== null) {
-        if (match[1]) {
-          segments.push({ lang: 'en', text: match[1] });
-        } else if (match[2]) {
-          segments.push({ lang: 'ko', text: match[2] });
-        }
-      }
-      return segments.filter(s => s.text.trim().length > 0);
-    }
-
-    // 화면 자동 꺼짐 방지 (Wake Lock)
-    async function requestWakeLock() {
-      try {
-        if ('wakeLock' in navigator) {
-          STATE.wakeLock = await navigator.wakeLock.request('screen');
-        }
-      } catch (err) {}
-    }
-
-    function releaseWakeLock() {
-      if (STATE.wakeLock) {
-        STATE.wakeLock.release().catch(() => {});
-        STATE.wakeLock = null;
-      }
-    }
-
-    // --- 5. 발화 제어 (Play / Stop) ---
-    function stopSpeaking() {
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-      }
-      STATE.isPlaying = false;
-      releaseWakeLock();
-
-      document.querySelectorAll('.ann-card').forEach(card => {
-        card.classList.remove('glow-lime');
-        const btnPlay = card.querySelector('.btn-play span');
-        if (btnPlay) btnPlay.textContent = '재생';
-      });
-      STATE.currentCard = null;
-    }
-
-    function speakCard(card) {
-      stopSpeaking();
-
-      const annId = card.dataset.annId;
-      let fullText = '';
-
-      if (annId === 'free') {
-        fullText = document.getElementById('inputFreeText').value.trim();
-        if (!fullText) {
-          alert('방송할 문장을 입력해 주세요.');
-          return;
-        }
-      } else {
-        const scriptBox = card.querySelector('.script-box');
-        fullText = scriptBox ? scriptBox.textContent.trim() : '';
-      }
-
-      if (!fullText) return;
-
-      STATE.isPlaying = true;
-      STATE.currentCard = card;
-      card.classList.add('glow-lime');
-      const btnPlay = card.querySelector('.btn-play span');
-      if (btnPlay) btnPlay.textContent = '방송 중...';
-
-      requestWakeLock();
-
-      const selKoName = document.getElementById('selectVoiceKo').value;
-      const selEnName = document.getElementById('selectVoiceEn').value;
-      const voiceKoObj = voices.find(v => v.name === selKoName);
-      const voiceEnObj = voices.find(v => v.name === selEnName);
-
-      // #13번(영어 전용) 카드 처리
-      if (annId === '13') {
-        const utter = new SpeechSynthesisUtterance(fullText);
-        utter.voice = voiceEnObj || voices.find(v => v.lang.startsWith('en')) || null;
-        utter.rate = STATE.speed;
-        utter.pitch = STATE.pitch;
-        utter.onend = () => stopSpeaking();
-        utter.onerror = () => stopSpeaking();
-        window.speechSynthesis.speak(utter);
-        return;
-      }
-
-      // 일반 한국어 중심 (한/영 자동 분기)
-      const segments = parseTextToSegments(fullText);
-      segments.forEach((seg, idx) => {
-        const utter = new SpeechSynthesisUtterance(seg.text);
-        if (seg.lang === 'en' && voiceEnObj) {
-          utter.voice = voiceEnObj;
-        } else {
-          utter.voice = voiceKoObj || voices.find(v => v.lang.startsWith('ko')) || null;
-        }
-        utter.rate = STATE.speed;
-        utter.pitch = STATE.pitch;
-
-        if (idx === segments.length - 1) {
-          utter.onend = () => stopSpeaking();
-          utter.onerror = () => stopSpeaking();
-        }
-        window.speechSynthesis.speak(utter);
-      });
-    }
-
-    // --- 6. 이벤트 리스너 등록 ---
-    document.addEventListener('DOMContentLoaded', () => {
-      // 1) 시작 오버레이 닫기
-      document.getElementById('btnStart').addEventListener('click', () => {
-        populateVoiceList();
-        // 무음 1회 발화로 모바일 브라우저 오디오 채널 완전 개방
-        const unlock = new SpeechSynthesisUtterance('진에어 안내방송을 시작합니다.');
-        unlock.volume = 0.1;
-        window.speechSynthesis.speak(unlock);
-        
-        const overlay = document.getElementById('startOverlay');
-        overlay.classList.add('opacity-0', 'pointer-events-none');
-        setTimeout(() => overlay.remove(), 300);
-      });
-
-      // 2) 편명 선택 버튼
-      document.querySelectorAll('#flightSelector .btn-flight').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          document.querySelectorAll('#flightSelector .btn-flight').forEach(b => {
-            b.classList.remove('active', 'bg-lime-400', 'text-slate-950', 'glow-lime-sm');
-            b.classList.add('text-slate-400');
-          });
-          e.target.classList.add('active', 'bg-lime-400', 'text-slate-950', 'glow-lime-sm');
-          e.target.classList.remove('text-slate-400');
-
-          STATE.flight = e.target.dataset.flight;
-          localStorage.setItem('lj_flight', STATE.flight);
-          updateAllAnnouncementTexts();
-        });
-      });
-
-      // 3) 목적지 선택 버튼
-      document.querySelectorAll('#destSelector .btn-dest').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          document.querySelectorAll('#destSelector .btn-dest').forEach(b => {
-            b.classList.remove('active', 'bg-lime-400', 'text-slate-950', 'glow-lime-sm');
-            b.classList.add('text-slate-400');
-          });
-          e.target.classList.add('active', 'bg-lime-400', 'text-slate-950', 'glow-lime-sm');
-          e.target.classList.remove('text-slate-400');
-
-          STATE.dest = e.target.dataset.dest;
-          localStorage.setItem('lj_dest', STATE.dest);
-          updateAllAnnouncementTexts();
-        });
-      });
-
-      // 4) 설정 드로어 토글
-      document.getElementById('btnToggleSettings').addEventListener('click', () => {
-        const panel = document.getElementById('settingsPanel');
-        panel.classList.toggle('hidden');
-      });
-
-      // 5) 음성 속도/피치 조절
-      document.getElementById('rangeSpeed').addEventListener('input', (e) => {
-        STATE.speed = parseFloat(e.target.value);
-        document.getElementById('lblSpeed').textContent = `${STATE.speed.toFixed(2)}x`;
-      });
-      document.getElementById('rangePitch').addEventListener('input', (e) => {
-        STATE.pitch = parseFloat(e.target.value);
-        document.getElementById('lblPitch').textContent = STATE.pitch.toFixed(2);
-      });
-
-      // 6) 아코디언 토글
-      document.querySelectorAll('.ann-header').forEach(header => {
-        header.addEventListener('click', (e) => {
-          const card = e.currentTarget.closest('.ann-card');
-          const content = card.querySelector('.accordion-content');
-          const chevron = card.querySelector('.chevron');
-          const isExpanded = content.classList.contains('expanded');
-
-          // 다른 아코디언 닫기
-          document.querySelectorAll('.accordion-content').forEach(c => c.classList.remove('expanded'));
-          document.querySelectorAll('.chevron').forEach(ch => ch.classList.remove('rotate-180'));
-
-          if (!isExpanded) {
-            content.classList.add('expanded');
-            chevron.classList.add('rotate-180');
-          }
-        });
-      });
-
-      // 7) 재생 / 정지 버튼
-      document.querySelectorAll('.btn-play').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const card = e.currentTarget.closest('.ann-card');
-          speakCard(card);
-        });
-      });
-
-      document.querySelectorAll('.btn-stop').forEach(btn => {
-        btn.addEventListener('click', () => stopSpeaking());
-      });
-
-      // 8) EN 툴팁 토글
-      document.querySelectorAll('.btn-en-toggle').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const card = e.currentTarget.closest('.ann-card');
-          const tooltip = card.querySelector('.tooltip-en');
-          if (tooltip) {
-            tooltip.classList.toggle('hidden');
-            e.currentTarget.classList.toggle('bg-lime-400/20');
-            e.currentTarget.classList.toggle('text-lime-400');
-          }
-        });
-      });
-
-      // 9) 반복 카운터 (+ / -)
-      document.querySelectorAll('.repeat-ctrl').forEach(ctrl => {
-        const valEl = ctrl.querySelector('.repeat-val');
-        ctrl.querySelector('.btn-repeat-minus').addEventListener('click', () => {
-          let v = parseInt(valEl.textContent, 10);
-          if (v > 1) {
-            valEl.textContent = v - 1;
-            updateAllAnnouncementTexts();
-          }
-        });
-        ctrl.querySelector('.btn-repeat-plus').addEventListener('click', () => {
-          let v = parseInt(valEl.textContent, 10);
-          if (v < 5) {
-            valEl.textContent = v + 1;
-            updateAllAnnouncementTexts();
-          }
-        });
-      });
-
-      // 10) 입력값 변경 시 실시간 텍스트 재조립
-      document.querySelectorAll('input, select, textarea').forEach(el => {
-        el.addEventListener('input', () => updateAllAnnouncementTexts());
-      });
-
-      // 11) 한글 발음 번역 (MyMemory API + 로컬 안전망)
-      document.querySelectorAll('.btn-trans').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-          const card = e.currentTarget.closest('.ann-card');
-          const txtArea = card.querySelector('.input-names');
-          const rawName = txtArea.value.trim();
-          if (!rawName) {
-            alert('승객 성명을 먼저 입력해 주세요.');
-            return;
-          }
-
-          btn.textContent = '번역 중...';
-          try {
-            const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(rawName)}&langpair=en|ko`);
-            const data = await res.json();
-            if (data && data.responseData && data.responseData.translatedText) {
-              txtArea.value = data.responseData.translatedText;
-              updateAllAnnouncementTexts();
-            }
-          } catch (err) {
-            alert('오프라인 상태이거나 네트워크 연결이 원활하지 않습니다. 승객 성명을 한글로 직접 입력해 주세요.');
-          } finally {
-            btn.textContent = '한글 발음 번역';
-          }
-        });
-      });
-
-      // 초기 문구 렌더링
-      updateAllAnnouncementTexts();
-    });
-  </script>
-</body>
-</html>
+<footer class="footer">
+  <p>JIN AIR TAG STATION ANNOUNCEMENT PLAYER</p>
+  <p>Bohol-Panglao International Airport (TAG) Ground Operations</p>
+  <p style="margin-top: 4px; color: #475569;">Ver. 2026.10 (Single Standalone Edition)</p>
+</footer>
