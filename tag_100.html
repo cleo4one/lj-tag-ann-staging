@@ -1,7 +1,8 @@
-/* 줌인/더블탭 확대 방지용 터치 액션 */
+/* 핀치 줌 / 더블 탭 확대 방지 */
 html, body {
-  touch-action: pan-x pan-y;
+  touch-action: manipulation;
   -webkit-text-size-adjust: 100%;
+  overscroll-behavior-y: none;
 }
 
 * {
@@ -17,17 +18,17 @@ body {
   color: var(--text-main);
   font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Pretendard", Roboto, sans-serif;
   line-height: 1.5;
-  padding-bottom: 80px;
+  padding-bottom: 60px;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Start Overlay (Audio Unlock for Mobile Web Speech) */
+/* Start Overlay (모바일 브라우저 오디오 언락) */
 #startOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(11, 19, 32, 0.96);
-  backdrop-filter: blur(10px);
+  background: rgba(11, 19, 32, 0.97);
+  backdrop-filter: blur(12px);
   z-index: 99999;
   display: flex;
   flex-direction: column;
@@ -37,7 +38,7 @@ body {
   text-align: center;
 }
 .overlay-content {
-  max-width: 380px;
+  max-width: 360px;
   width: 100%;
 }
 .logo-badge {
@@ -48,7 +49,7 @@ body {
   padding: 6px 14px;
   border-radius: var(--radius-full);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 1px;
   margin-bottom: 16px;
   box-shadow: 0 0 16px var(--lj-lime-glow);
@@ -60,9 +61,9 @@ body {
   margin-bottom: 8px;
 }
 .overlay-desc {
-  font-size: 14px;
+  font-size: 13.5px;
   color: var(--text-muted);
-  margin-bottom: 28px;
+  margin-bottom: 24px;
   line-height: 1.6;
 }
 .btn-start {
@@ -83,16 +84,16 @@ body {
   background: var(--lj-lime-hover);
 }
 
-/* Sticky Top Header */
+/* 상단 고정 헤더 */
 .top-header {
   position: sticky;
   top: 0;
   z-index: 1000;
-  background: rgba(13, 23, 38, 0.95);
+  background: rgba(13, 23, 38, 0.96);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border-card);
   padding: 12px 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 .header-branding {
   display: flex;
@@ -120,7 +121,7 @@ body {
 .status-badge {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   font-size: 11px;
   color: var(--text-muted);
 }
@@ -137,7 +138,7 @@ body {
   50% { opacity: 0.4; }
 }
 
-/* Flight & Destination Toggle Selectors */
+/* 편명 & 목적지 선택 버튼 */
 .selector-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -183,21 +184,18 @@ body {
   box-shadow: 0 0 12px var(--lj-lime-glow);
 }
 
-/* Voice / Settings Collapsible Drawer */
+/* 음성 설정 서랍 */
 .settings-drawer-toggle {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 10px;
+  padding: 8px 12px;
   background: var(--bg-card-inner);
   border: 1px solid var(--border-card);
   border-radius: var(--radius-md);
   font-size: 12px;
   color: var(--text-muted);
   cursor: pointer;
-}
-.settings-drawer-toggle:hover {
-  color: var(--text-main);
 }
 .settings-panel {
   display: none;
@@ -234,17 +232,14 @@ body {
   font-size: 12px;
   outline: none;
 }
-.setting-row select:focus {
-  border-color: var(--lj-lime);
-}
 .setting-row input[type="range"] {
   width: 100%;
   accent-color: var(--lj-lime);
 }
 
-/* Main Container & Announcement Cards */
+/* 메인 컨테이너 */
 .container {
-  max-width: 600px;
+  max-width: 620px;
   margin: 0 auto;
   padding: 16px 12px;
 }
@@ -254,6 +249,7 @@ body {
   gap: 12px;
 }
 
+/* 방송 카드 */
 .ann-card {
   background: var(--bg-card);
   border: 1px solid var(--border-card);
@@ -273,7 +269,6 @@ body {
   justify-content: space-between;
   padding: 14px 16px;
   cursor: pointer;
-  user-select: none;
   background: var(--bg-card);
   transition: background 0.15s;
 }
@@ -306,7 +301,7 @@ body {
   font-size: 11px;
   font-weight: 800;
   color: var(--lj-lime);
-  background: rgba(180, 219, 43, 0.1);
+  background: rgba(180, 219, 43, 0.12);
   padding: 2px 6px;
   border-radius: 4px;
 }
@@ -336,7 +331,7 @@ body {
   display: block;
 }
 
-/* Inputs in Card */
+/* 카드 내 입력 폼 */
 .inputs-wrap {
   display: flex;
   flex-wrap: wrap;
@@ -367,17 +362,18 @@ body {
   padding: 6px 8px;
   font-size: 12px;
   outline: none;
+  user-select: text;
 }
 .input-field textarea {
   width: 100%;
-  min-height: 44px;
+  min-height: 48px;
   resize: vertical;
 }
 .input-field input:focus, .input-field select:focus, .input-field textarea:focus {
   border-color: var(--lj-lime);
 }
 
-/* Repeat Counter Widget */
+/* 반복 카운터 */
 .repeat-ctrl {
   display: flex;
   align-items: center;
@@ -423,7 +419,7 @@ body {
   color: #0B1320;
 }
 
-/* Script Display & Word Highlighting */
+/* 대본 상자 & 실시간 단어 하이라이트 */
 .script-box {
   background: var(--bg-main);
   border: 1px solid var(--border-card);
@@ -435,11 +431,9 @@ body {
   margin-bottom: 12px;
   word-break: keep-all;
 }
-
-/* 실시간 단어 하이라이트 스타일 */
 .script-box .word-token {
   display: inline;
-  padding: 1px 2px;
+  padding: 1px 3px;
   border-radius: 3px;
   transition: background-color 0.1s ease, color 0.1s ease;
 }
@@ -454,7 +448,7 @@ body {
   font-weight: 700;
 }
 
-/* English Translation Tooltip Box */
+/* 영문 번역 툴팁 */
 .tooltip-en-box {
   display: none;
   background: #172439;
@@ -471,7 +465,7 @@ body {
   display: block;
 }
 
-/* Playback Progress Bar (재생 진행 바) */
+/* 실시간 재생 진행 바 */
 .progress-bar-wrap {
   width: 100%;
   height: 5px;
@@ -486,11 +480,11 @@ body {
   width: 0%;
   background: var(--lj-lime);
   box-shadow: 0 0 10px var(--lj-lime);
-  transition: width 0.15s ease-out;
+  transition: width 0.12s ease-out;
   border-radius: var(--radius-full);
 }
 
-/* Controls Bar */
+/* 컨트롤 버튼 */
 .controls-row {
   display: flex;
   align-items: center;
@@ -546,17 +540,17 @@ body {
   background: var(--lj-lime-dim);
 }
 
-/* Footer Information */
+/* 푸터 */
 .footer {
   text-align: center;
-  margin-top: 30px;
+  margin-top: 32px;
   font-size: 11px;
   color: var(--text-dim);
   line-height: 1.6;
 }
 
 
-<!-- Flight & Destination Selectors -->
+<!-- 편명 & 목적지 선택 -->
 <div class="selector-grid">
   <div class="select-card">
     <span class="select-label">Flight (편명)</span>
@@ -574,9 +568,9 @@ body {
   </div>
 </div>
 
-<!-- Voice Settings Collapsible Drawer -->
+<!-- 음성 설정 서랍 -->
 <div class="settings-drawer-toggle" id="btnToggleSettings">
-  <span>⚙️ 음성 엔진 및 속도/피치 조절</span>
+  <span>⚙️ 음성 엔진 및 속도/피치 설정</span>
   <span id="settingsChevron">▼</span>
 </div>
 <div class="settings-panel" id="settingsPanel">
@@ -640,7 +634,7 @@ body {
     <div class="ann-body">
       <div class="inputs-wrap">
         <div class="input-field" style="width: 100%;">
-          <textarea class="input-names" placeholder="승객 영문 또는 한글 성명 (쉼표 구분, 예: HONG GILDONG, KIM CHEOLSU)"></textarea>
+          <textarea class="input-names" placeholder="승객 영문 또는 한글 성명 (예: HONG GILDONG, KIM CHEOLSU)"></textarea>
         </div>
         <div class="input-field">
           <button class="btn-action-small btn-trans">한글 발음 번역</button>
@@ -881,7 +875,7 @@ body {
             <button class="repeat-btn plus">+</button>
           </div>
         </div>
-        <div class="input-field">
+        <div class="input-field" style="margin-left: auto;">
           <label>Gate#:</label>
           <input type="number" class="input-gate" value="3" min="1" max="10" style="width: 50px;">
         </div>
@@ -950,7 +944,7 @@ body {
     <div class="ann-body">
       <div class="inputs-wrap">
         <div class="input-field">
-          <label>변경 탑승구 선택:</label>
+          <label>변경 탑승구:</label>
           <select class="input-gate-select">
             <option value="8">8번 탑승구</option>
             <option value="9">9번 탑승구</option>
@@ -991,7 +985,7 @@ body {
     </div>
   </div>
 
-  <!-- #13 Power Banks Regulations (EN Only) -->
+  <!-- #13 Power Banks Regulations (EN) -->
   <div class="ann-card" data-ann-id="13">
     <div class="ann-header">
       <div class="ann-title-wrap">
@@ -1003,7 +997,7 @@ body {
     </div>
     <div class="ann-body">
       <div class="script-box" data-template="Attention please, passengers traveling with Jin Air. Power banks and spare lithium batteries are strictly prohibited in checked baggage. Please carry all portable power banks and e-cigarettes in your carry-on baggage only. Thank you."></div>
-      <div class="tooltip-en-box" data-en-template="This announcement is spoken purely in English for foreign passengers."></div>
+      <div class="tooltip-en-box" data-en-template="This announcement is spoken purely in English for international passengers."></div>
       <div class="progress-bar-wrap"><div class="progress-bar-fill"></div></div>
       <div class="controls-row">
         <button class="btn-play">▶ 재생</button>
@@ -1013,7 +1007,7 @@ body {
     </div>
   </div>
 
-  <!-- #14 FLT DLY - A/C CONX (Disembarkation) -->
+  <!-- #14 FLT DLY – A/C CONX (Disembarkation) -->
   <div class="ann-card" data-ann-id="14">
     <div class="ann-header">
       <div class="ann-title-wrap">
@@ -1052,7 +1046,7 @@ body {
     </div>
   </div>
 
-  <!-- #15 FLT DLY – A/C CONX (Cabin prep) -->
+  <!-- #15 FLT DLY – Cabin Preparation -->
   <div class="ann-card" data-ann-id="15">
     <div class="ann-header">
       <div class="ann-title-wrap">
@@ -1115,9 +1109,3 @@ body {
   </div>
 
 </div>
-
-<footer class="footer">
-  <p>JIN AIR TAG STATION ANNOUNCEMENT PLAYER</p>
-  <p>Bohol-Panglao International Airport (TAG) Ground Operations</p>
-  <p style="margin-top: 4px; color: #475569;">Ver. 2026.10 (Single Standalone Edition)</p>
-</footer>
