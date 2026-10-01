@@ -1,4 +1,24 @@
-/* 핀치 줌 / 더블 탭 확대 방지 */
+  --lj-lime: #B4DB2B;
+  --lj-lime-dim: rgba(180, 219, 43, 0.15);
+  --lj-lime-glow: rgba(180, 219, 43, 0.4);
+  --lj-lime-hover: #9EC31F;
+
+  --color-danger: #EF4444;
+  --color-danger-bg: rgba(239, 68, 68, 0.15);
+
+  --text-main: #F8FAFC;
+  --text-muted: #94A3B8;
+  --text-dim: #64748B;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-full: 9999px;
+
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+/* 핀치 줌 / 더블 탭 확대 방지 및 모바일 터치 최적화 */
 html, body {
   touch-action: manipulation;
   -webkit-text-size-adjust: 100%;
@@ -18,17 +38,19 @@ body {
   color: var(--text-main);
   font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Pretendard", Roboto, sans-serif;
   line-height: 1.5;
-  padding-bottom: 60px;
+  padding-bottom: 80px;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Start Overlay (모바일 브라우저 오디오 언락) */
+/* ========================================================
+   2. 스타트 오버레이 (모바일 브라우저 오디오 언락)
+   ======================================================== */
 #startOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(11, 19, 32, 0.97);
-  backdrop-filter: blur(12px);
+  background: rgba(11, 19, 32, 0.98);
+  backdrop-filter: blur(14px);
   z-index: 99999;
   display: flex;
   flex-direction: column;
@@ -61,7 +83,7 @@ body {
   margin-bottom: 8px;
 }
 .overlay-desc {
-  font-size: 13.5px;
+  font-size: 13px;
   color: var(--text-muted);
   margin-bottom: 24px;
   line-height: 1.6;
@@ -84,13 +106,15 @@ body {
   background: var(--lj-lime-hover);
 }
 
-/* 상단 고정 헤더 */
+/* ========================================================
+   3. 상단 고정 헤더 & 조작 바
+   ======================================================== */
 .top-header {
   position: sticky;
   top: 0;
   z-index: 1000;
-  background: rgba(13, 23, 38, 0.96);
-  backdrop-filter: blur(12px);
+  background: var(--bg-header);
+  backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--border-card);
   padding: 12px 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
@@ -105,7 +129,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 800;
   color: #fff;
   letter-spacing: -0.3px;
@@ -135,14 +159,14 @@ body {
 }
 @keyframes pulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  50% { opacity: 0.35; }
 }
 
 /* 편명 & 목적지 선택 버튼 */
 .selector-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 8px;
   margin-bottom: 10px;
 }
 .select-card {
@@ -166,15 +190,15 @@ body {
 }
 .btn-toggle {
   flex: 1;
-  padding: 8px 4px;
+  padding: 7px 4px;
   background: transparent;
   border: 1px solid var(--border-card);
   border-radius: var(--radius-sm);
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
   text-align: center;
 }
 .btn-toggle.active {
@@ -189,11 +213,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
+  padding: 7px 12px;
   background: var(--bg-card-inner);
   border: 1px solid var(--border-card);
   border-radius: var(--radius-md);
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--text-muted);
   cursor: pointer;
 }
@@ -204,7 +228,7 @@ body {
   border-top: none;
   border-radius: 0 0 var(--radius-md) var(--radius-md);
   padding: 12px;
-  margin-top: -4px;
+  margin-top: -3px;
 }
 .settings-panel.open {
   display: block;
@@ -237,7 +261,9 @@ body {
   accent-color: var(--lj-lime);
 }
 
-/* 메인 컨테이너 */
+/* ========================================================
+   4. 방송 카드 레이아웃
+   ======================================================== */
 .container {
   max-width: 620px;
   margin: 0 auto;
@@ -248,8 +274,6 @@ body {
   flex-direction: column;
   gap: 12px;
 }
-
-/* 방송 카드 */
 .ann-card {
   background: var(--bg-card);
   border: 1px solid var(--border-card);
@@ -262,18 +286,17 @@ body {
   border-color: var(--lj-lime);
   box-shadow: 0 0 16px var(--lj-lime-glow);
 }
-
 .ann-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
+  padding: 13px 15px;
   cursor: pointer;
   background: var(--bg-card);
   transition: background 0.15s;
 }
 .ann-header:active {
-  background: var(--bg-card-hover);
+  background: rgba(255, 255, 255, 0.04);
 }
 .ann-title-wrap {
   display: flex;
@@ -312,7 +335,7 @@ body {
 }
 .chevron {
   color: var(--text-dim);
-  font-size: 12px;
+  font-size: 11px;
   transition: transform 0.2s ease;
   margin-left: 8px;
 }
@@ -320,7 +343,6 @@ body {
   transform: rotate(180deg);
   color: var(--lj-lime);
 }
-
 .ann-body {
   display: none;
   padding: 14px 16px 16px;
@@ -331,7 +353,7 @@ body {
   display: block;
 }
 
-/* 카드 내 입력 폼 */
+/* 입력 필드 */
 .inputs-wrap {
   display: flex;
   flex-wrap: wrap;
@@ -387,12 +409,12 @@ body {
   border: none;
   color: var(--text-muted);
   padding: 4px 8px;
-  font-size: 14px;
+  font-size: 13px;
   cursor: pointer;
 }
 .repeat-btn:active {
   color: var(--lj-lime);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.06);
 }
 .repeat-val {
   font-size: 12px;
@@ -412,7 +434,7 @@ body {
   padding: 5px 8px;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s;
 }
 .btn-action-small:active {
   background: var(--lj-lime);
@@ -431,19 +453,19 @@ body {
   margin-bottom: 12px;
   word-break: keep-all;
 }
-.script-box .word-token {
+.word-token {
   display: inline;
   padding: 1px 3px;
   border-radius: 3px;
-  transition: background-color 0.1s ease, color 0.1s ease;
+  transition: background-color 0.08s ease, color 0.08s ease;
 }
-.script-box .word-token.highlight {
+.word-token.highlight {
   background: var(--lj-lime) !important;
   color: #0B1320 !important;
   font-weight: 800 !important;
   box-shadow: 0 0 10px var(--lj-lime-glow);
 }
-.script-box .var-tag {
+.var-tag {
   color: var(--lj-lime);
   font-weight: 700;
 }
@@ -512,7 +534,7 @@ body {
 }
 .btn-stop {
   padding: 10px 14px;
-  background: rgba(239, 68, 68, 0.15);
+  background: var(--color-danger-bg);
   border: 1px solid var(--color-danger);
   color: #F87171;
   border-radius: var(--radius-md);
@@ -568,7 +590,7 @@ body {
   </div>
 </div>
 
-<!-- 음성 설정 서랍 -->
+<!-- 음성 설정 서랍 토글 -->
 <div class="settings-drawer-toggle" id="btnToggleSettings">
   <span>⚙️ 음성 엔진 및 속도/피치 설정</span>
   <span id="settingsChevron">▼</span>
@@ -599,7 +621,7 @@ body {
 </div>
 
 
-  <!-- #1 Final Call for Check-in -->
+  <!-- #1 Final Call for Check-in (No names) -->
   <div class="ann-card" data-ann-id="1">
     <div class="ann-header">
       <div class="ann-title-wrap">
@@ -637,7 +659,7 @@ body {
           <textarea class="input-names" placeholder="승객 영문 또는 한글 성명 (예: HONG GILDONG, KIM CHEOLSU)"></textarea>
         </div>
         <div class="input-field">
-          <button class="btn-action-small btn-trans">한글 발음 번역</button>
+          <button class="btn-action-small btn-trans">한글 발음 변환</button>
         </div>
         <div class="input-field" style="margin-left: auto;">
           <label>이름 반복:</label>
@@ -675,7 +697,7 @@ body {
           <textarea class="input-names" placeholder="승객 성명 (예: LEE YOUNGHEE)"></textarea>
         </div>
         <div class="input-field">
-          <button class="btn-action-small btn-trans">한글 발음 번역</button>
+          <button class="btn-action-small btn-trans">한글 발음 변환</button>
         </div>
         <div class="input-field" style="margin-left: auto;">
           <label>이름 반복:</label>
@@ -865,7 +887,7 @@ body {
           <textarea class="input-names" placeholder="미탑승 승객 성명 (예: PARK JIMIN)"></textarea>
         </div>
         <div class="input-field">
-          <button class="btn-action-small btn-trans">한글 발음 번역</button>
+          <button class="btn-action-small btn-trans">한글 발음 변환</button>
         </div>
         <div class="input-field">
           <label>이름반복:</label>
@@ -1085,7 +1107,7 @@ body {
     </div>
   </div>
 
-  <!-- Custom Free-form -->
+  <!-- Custom Free-form Announcement -->
   <div class="ann-card" data-ann-id="custom">
     <div class="ann-header">
       <div class="ann-title-wrap">
@@ -1109,3 +1131,8 @@ body {
   </div>
 
 </div>
+
+<footer class="footer">
+  <p>진에어 보홀(TAG) 지점 탑승구 및 카운터 전용 방송 시스템</p>
+  <p>Jin Air Bohol Panglao International Airport Ground Operations</p>
+</footer>
