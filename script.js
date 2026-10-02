@@ -5,8 +5,10 @@ const destNames = { ICN: '인천', PUS: '부산' };
 
 let synth = window.speechSynthesis;
 let voices = [];
-let currentUtterance = null;
-let currentCard = null;
+
+// Track Playback State
+let activeCard = null;
+let isPaused = false;
 
 // DOM Elements
 const startOverlay = document.getElementById('startOverlay');
@@ -18,21 +20,21 @@ const rngPitch = document.getElementById('rngPitch');
 const lblSpeed = document.getElementById('lblSpeed');
 const lblPitch = document.getElementById('lblPitch');
 
-// 1. Zoom and Gesture Prevention
+// Gesture Prevention
 document.addEventListener('gesturestart', (e) => e.preventDefault());
 document.addEventListener('gesturechange', (e) => e.preventDefault());
 
-// 2. Start Overlay Event
+// Start Overlay Click
 btnStart.addEventListener('click', () => {
     initVoices();
     startOverlay.style.display = 'none';
 });
 
-// 3. Sliders UI Event
+// Slider Updates
 rngSpeed.addEventListener('input', (e) => lblSpeed.textContent = e.target.value);
 rngPitch.addEventListener('input', (e) => lblPitch.textContent = e.target.value);
 
-// 4. Voice Initialization
+// Voice Init
 function initVoices() {
     voices = synth.getVoices();
     selVoiceKo.innerHTML = '';
@@ -54,34 +56,62 @@ if (speechSynthesis.onvoiceschanged !== undefined) {
     speechSynthesis.onvoiceschanged = initVoices;
 }
 
-// 5. Flight & Destination Buttons
-document.querySelectorAll('.btn-flight').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        document.querySelectorAll('.btn-flight').forEach(b => {
-            b.classList.remove('bg-lj-lime', 'text-slate-950');
-            b.classList.add('text-slate-400');
-        });
-        e.target.classList.add('bg-lj-lime', 'text-slate-950');
-        e.target.classList.remove('text-slate-400');
-        currentFlight = e.target.getAttribute('data-val');
+// Language Segment Parser (Korean vs English Voice Separation)
+function parseTextToSegments(text) {
+    const segments = [];
+    const regex = /([A-Za-z0-9\s.,!?-]+)|([^A-Za-z0-9\s.,!?-]+)/g;
+    let match;
+
+    while ((match = regex.exec(text)) !== null) {
+        if (match[1]) {
+            segments.push({ text: match[1], lang: 'en' });
+        } else if (match[2]) {
+            segments.push({ text: match[2], lang: 'ko' });
+        }
+    }
+    return segments;
+}
+
+// Repeat Buttons Logic
+document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('btn-repeat-plus')) {
+        const span = e.target.previousElementSibling;
+        let val = parseInt(span.textContent) || 1;
+        span.textContent = val + 1;
         updateAllTemplates();
-    });
+    } else if (e.target.classList.contains('btn-repeat-minus')) {
+        const span = e.target.nextElementSibling;
+        let val = parseInt(span.textContent) || 1;
+        if (val > 1) span.textContent = val - 1;
+        updateAllTemplates();
+    }
 });
 
-document.querySelectorAll('.btn-dest').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        document.querySelectorAll('.btn-dest').forEach(b => {
-            b.classList.remove('bg-lj-lime', 'text-slate-950');
-            b.classList.add('text-slate-400');
-        });
-        e.target.classList.add('bg-lj-lime', 'text-slate-950');
-        e.target.classList.remove('text-slate-400');
-        currentDest = e.target.getAttribute('data-val');
-        updateAllTemplates();
-    });
+// MyMemory Translation API Call
+document.addEventListener('click', async (e) => {
+    if (e.target.classList.contains('btn-translate')) {
+        const card = e.target.closest('.ann-card');
+        const textarea = card.querySelector('.input-names');
+        const query = textarea.value.trim();
+        if (!query) return;
+
+        e.target.textContent = '번역 중...';
+        try {
+            const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(query)}&langpair=en|ko`);
+            const data = await res.json();
+            if (data && data.responseData && data.responseData.translatedText) {
+                textarea.value = data.responseData.translatedText;
+                updateAllTemplates();
+            }
+        } catch (err) {
+            alert('번역 서버 연결 실패. 수동으로 입력해 주세요.');
+        } finally {
+            e.target.textContent = '영문 이름 한글 번역';
+        }
+    }
 });
 
-// 6. Template Placeholder Updater
+// Template Updates with Repetition
 function updateAllTemplates() {
     document.querySelectorAll('.ann-card').forEach(card => {
         const textElem = card.querySelector('.ann-text');
@@ -99,135 +129,161 @@ function updateAllTemplates() {
         const nameInput = card.querySelector('.input-names');
         let namesVal = nameInput && nameInput.value.trim() !== '' ? nameInput.value.trim() : '';
 
-        const delayHInput = card.querySelector('.input-delay-h');
-        const delayMInput = card.querySelector('.input-delay-m');
-        let delayHVal = delayHInput ? delayHInput.value : '0';
-        let delayMVal = delayMInput ? delayMInput.value : '0';
+        // Repeat Logic
+        const repeatSpan = card.querySelector('.repeat-val');
+        const repeatCount = repeatSpan ? parseInt(repeatSpan.textContent) || 1 : 1;
+
+        if (namesVal && repeatCount > 1) {
+            namesVal = Array(repeatCount).fill(namesVal).join(', ');
+        }
+        if (gateVal && repeatCount > 1 && template.includes('{gate}번')) {
+            const repeatedGate = Array(repeatCount).fill(`${gateVal}번`).join(', ');
+            template = template.replace('{gate}번', repeatedGate);
+        }
 
         let result = template
             .replace(/{destination}/g, destSpoken)
             .replace(/{flightNumber}/g, flightSpoken)
             .replace(/{gate}/g, gateVal)
-            .replace(/{names}/g, namesVal)
-            .replace(/{delayH}/g, delayHVal)
-            .replace(/{delayM}/g, delayMVal);
+            .replace(/{names}/g, namesVal);
 
         textElem.textContent = result;
     });
 }
 
-// 7. Inputs Event Watcher
-document.addEventListener('input', (e) => {
-    if (e.target.classList.contains('input-gate') ||
-        e.target.classList.contains('input-names') ||
-        e.target.classList.contains('input-delay-h') ||
-        e.target.classList.contains('input-delay-m')) {
-        updateAllTemplates();
-    }
-});
-
-// 8. Accordion Toggle
+// Accordion Toggle
 document.querySelectorAll('.card-header').forEach(header => {
     header.addEventListener('click', () => {
         const body = header.nextElementSibling;
         const isHidden = body.classList.contains('hidden');
+        
+        // Stop current speech when toggling accordion
+        stopSpeech();
         document.querySelectorAll('.card-body').forEach(b => b.classList.add('hidden'));
         if (isHidden) body.classList.remove('hidden');
     });
 });
 
-// 9. Playback Logic
+// Play / Pause / Resume Logic
 document.querySelectorAll('.btn-play').forEach(btn => {
     btn.addEventListener('click', (e) => {
         const card = e.target.closest('.ann-card');
+
+        // 1. Same Card Clicked while Speaking -> Toggle Pause / Resume
+        if (activeCard === card) {
+            if (synth.speaking && !synth.paused) {
+                synth.pause();
+                isPaused = true;
+                e.target.textContent = '▶ 계속 재생 (Resume)';
+                return;
+            } else if (synth.paused) {
+                synth.resume();
+                isPaused = false;
+                e.target.textContent = '❚❚ 일시정지 (Pause)';
+                return;
+            }
+        }
+
+        // 2. Different Card or New Play -> Stop and Start Fresh
+        stopSpeech();
+        activeCard = card;
+        e.target.textContent = '❚❚ 일시정지 (Pause)';
+
         const textElem = card.querySelector('.ann-text');
-        const isEnglish = e.target.getAttribute('data-lang') === 'en';
-        playAnnouncement(card, textElem.textContent.trim(), isEnglish);
+        const progressFill = card.querySelector('.progress-bar-fill');
+        const text = textElem.textContent.trim();
+
+        const words = text.split(' ');
+        textElem.innerHTML = words.map(w => `<span>${w}</span>`).join(' ');
+        const spans = textElem.querySelectorAll('span');
+
+        const segments = parseTextToSegments(text);
+        let currentSegmentIdx = 0;
+
+        function speakNextSegment() {
+            if (currentSegmentIdx >= segments.length) {
+                resetCardUI(card);
+                stopSpeech();
+                return;
+            }
+
+            const seg = segments[currentSegmentIdx];
+            const utterance = new SpeechSynthesisUtterance(seg.text);
+            utterance.rate = parseFloat(rngSpeed.value);
+            utterance.pitch = parseFloat(rngPitch.value);
+
+            if (voices.length > 0) {
+                if (seg.lang === 'en' && selVoiceEn.value) {
+                    utterance.voice = voices[selVoiceEn.value];
+                } else if (selVoiceKo.value) {
+                    utterance.voice = voices[selVoiceKo.value];
+                }
+            }
+
+            utterance.onboundary = (event) => {
+                if (event.name === 'word') {
+                    const charIdx = event.charIndex;
+                    let currentLen = 0;
+
+                    spans.forEach((span, idx) => {
+                        const spanLen = span.textContent.length;
+                        if (charIdx >= currentLen && charIdx < currentLen + spanLen + 1) {
+                            span.className = 'hl-word';
+                            const pct = Math.min(100, Math.round(((idx + 1) / spans.length) * 100));
+                            if (progressFill) progressFill.style.width = pct + '%';
+                        } else {
+                            span.className = '';
+                        }
+                        currentLen += spanLen + 1;
+                    });
+                }
+            };
+
+            utterance.onend = () => {
+                currentSegmentIdx++;
+                speakNextSegment();
+            };
+
+            utterance.onerror = () => {
+                resetCardUI(card);
+                stopSpeech();
+            };
+
+            synth.speak(utterance);
+        }
+
+        speakNextSegment();
     });
 });
 
-const btnCustomPlay = document.querySelector('.btn-play-custom');
-if (btnCustomPlay) {
-    btnCustomPlay.addEventListener('click', (e) => {
-        const card = e.target.closest('.ann-card');
-        const inputCustom = card.querySelector('.input-custom');
-        const text = inputCustom.value.trim();
-        if (text) playAnnouncement(card, text, false);
-    });
-}
-
-function playAnnouncement(card, text, isEnglish = false) {
-    const textElem = card.querySelector('.ann-text');
-    const progressFill = card.querySelector('.progress-bar-fill');
-
-    if (synth.speaking) {
-        synth.cancel();
-        resetCardUI(currentCard);
-        if (currentCard === card) {
-            currentCard = null;
-            return;
-        }
-    }
-
-    currentCard = card;
-    if (textElem.classList.contains('hidden')) textElem.classList.remove('hidden');
-
-    const words = text.split(' ');
-    textElem.innerHTML = words.map(w => `<span>${w}</span>`).join(' ');
-    const spans = textElem.querySelectorAll('span');
-
-    currentUtterance = new SpeechSynthesisUtterance(text);
-    currentUtterance.rate = parseFloat(rngSpeed.value);
-    currentUtterance.pitch = parseFloat(rngPitch.value);
-
-    if (voices.length > 0) {
-        if (isEnglish && selVoiceEn.value) {
-            currentUtterance.voice = voices[selVoiceEn.value];
-        } else if (selVoiceKo.value) {
-            currentUtterance.voice = voices[selVoiceKo.value];
-        }
-    }
-
-    currentUtterance.onboundary = (event) => {
-        if (event.name === 'word') {
-            const charIdx = event.charIndex;
-            let currentLen = 0;
-
-            spans.forEach((span, idx) => {
-                const spanLen = span.textContent.length;
-                if (charIdx >= currentLen && charIdx < currentLen + spanLen + 1) {
-                    span.className = 'hl-word';
-                    const pct = Math.min(100, Math.round(((idx + 1) / spans.length) * 100));
-                    if (progressFill) progressFill.style.width = pct + '%';
-                } else {
-                    span.className = '';
-                }
-                currentLen += spanLen + 1;
-            });
-        }
-    };
-
-    currentUtterance.onend = () => { resetCardUI(card); currentCard = null; };
-    currentUtterance.onerror = () => { resetCardUI(card); currentCard = null; };
-
-    synth.speak(currentUtterance);
-}
-
-// Stop Button
+// Stop Button Logic
 document.querySelectorAll('.btn-stop').forEach(btn => {
     btn.addEventListener('click', () => {
-        if (synth.speaking) synth.cancel();
-        if (currentCard) { resetCardUI(currentCard); currentCard = null; }
+        stopSpeech();
     });
 });
+
+function stopSpeech() {
+    if (synth.speaking || synth.paused) {
+        synth.cancel();
+    }
+    if (activeCard) {
+        resetCardUI(activeCard);
+        activeCard = null;
+    }
+    isPaused = false;
+}
 
 function resetCardUI(card) {
     if (!card) return;
+    const btnPlay = card.querySelector('.btn-play');
     const textElem = card.querySelector('.ann-text');
     const progressFill = card.querySelector('.progress-bar-fill');
+
+    if (btnPlay) btnPlay.textContent = '▶ 재생 / 일시정지';
     if (progressFill) progressFill.style.width = '0%';
     if (textElem) textElem.querySelectorAll('span').forEach(s => s.className = '');
 }
 
-// Init Setup
+// Initial Setup
 updateAllTemplates();
