@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>진에어 보홀 지점 공항 안내방송</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --lj-lime: #B4DB2B;
+            --lj-navy: #0F172A;
+            --lj-card: #1E293B;
+        }
+        body {
+            background-color: var(--lj-navy);
+            color: #F8FAFC;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            touch-action: manipulation;
+        }
+        .bg-lj-card { background-color: var(--lj-card); }
+        .border-lj-lime { border-color: var(--lj-lime); }
+        .text-lj-lime { color: var(--lj-lime); }
+        .bg-lj-lime { background-color: var(--lj-lime); }
+        
+        .hl-word {
+            background-color: var(--lj-lime) !important;
+            color: #000000 !important;
+            font-weight: bold;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+        .progress-bar-wrap {
+            width: 100%;
+            height: 4px;
+            background-color: #334155;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background-color: var(--lj-lime);
+            transition: width 0.1s linear;
+        }
+    </style>
+</head>
+<body class="pb-12">
+
+    <!-- Start Overlay -->
+    <div id="startOverlay" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-950/95 p-6 text-center">
+        <div class="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl space-y-6">
+            <div class="inline-flex p-4 rounded-2xl bg-lime-400/10 text-lj-lime mb-2">
+                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
+            </div>
+            <h1 class="text-2xl font-bold text-white">진에어 안내방송 플레이어</h1>
+            <p class="text-slate-400 text-sm">보홀 공항(TAG) 지점 실무 전용 시스템</p>
+            <button id="btnStart" class="w-full py-4 bg-lj-lime text-slate-950 font-bold rounded-2xl shadow-lg hover:brightness-110 active:scale-95 transition text-lg">
+                ▶ 진에어 방송 플레이어 시작
+            </button>
+        </div>
+    </div>
+
+    <!-- Top Header Bar -->
+    <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur border-b border-slate-800 px-4 py-3">
+        <div class="max-w-3xl mx-auto flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center space-x-2">
+                <span class="font-extrabold tracking-wider text-lj-lime text-lg">JINAIR</span>
+                <span class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-mono">TAG Branch</span>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <!-- Flight Select -->
+                <div class="flex rounded-xl bg-slate-800 p-1 border border-slate-700">
+                    <button class="btn-flight px-3 py-1 rounded-lg text-xs font-bold transition bg-lj-lime text-slate-950" data-val="LJ044">LJ044</button>
+                    <button class="btn-flight px-3 py-1 rounded-lg text-xs font-bold transition text-slate-400" data-val="LJ046">LJ046</button>
+                </div>
+
+                <!-- Destination Select -->
+                <div class="flex rounded-xl bg-slate-800 p-1 border border-slate-700">
+                    <button class="btn-dest px-3 py-1 rounded-lg text-xs font-bold transition bg-lj-lime text-slate-950" data-val="ICN">ICN 인천</button>
+                    <button class="btn-dest px-3 py-1 rounded-lg text-xs font-bold transition text-slate-400" data-val="PUS">PUS 부산</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-3xl mx-auto p-4 space-y-4">
+
+        <!-- Voice Settings Panel -->
+        <section class="bg-lj-card border border-slate-800 rounded-2xl p-4 space-y-3">
+            <h2 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">음성 및 재생 속도 설정</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                    <label class="text-xs text-slate-300">한국어 음성 (Korean Voice)</label>
+                    <select id="selVoiceKo" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-lj-lime"></select>
+                </div>
+                <div>
+                    <label class="text-xs text-slate-300">영어 음성 (English Voice)</label>
+                    <select id="selVoiceEn" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-lj-lime"></select>
+                </div>
+            </div>
+        </section>
+
+        <!-- Announcements Catalog -->
+        <section id="annCatalog" class="space-y-3">
+
+            <!-- Card 1 -->
+            <article class="ann-card bg-lj-card border border-slate-800 rounded-2xl overflow-hidden" data-id="1">
+                <div class="card-header p-4 flex items-center justify-between cursor-pointer hover:bg-slate-800/50">
+                    <div class="flex items-center space-x-3">
+                        <span class="w-7 h-7 rounded-full bg-slate-800 text-lj-lime text-xs font-bold flex items-center justify-center border border-slate-700">1</span>
+                        <h3 class="font-bold text-slate-100 text-sm">Final Call for Check-in (No names)</h3>
+                    </div>
+                    <span class="text-xs text-slate-500 font-mono">체크인 최종 마감</span>
+                </div>
+                <div class="card-body hidden p-4 pt-0 border-t border-slate-800/50 space-y-3 mt-3">
+                    <div class="progress-bar-wrap"><div class="progress-bar-fill"></div></div>
+                    <p class="ann-text text-slate-300 text-sm leading-relaxed p-3 bg-slate-900/60 rounded-xl border border-slate-800" data-template="진에어 {destination}행 수속 마감 예정 방송입니다. 탑승수속을 마치지 않으신 승객께서는 지금 즉시 진에어 카운터로 와 주시기 바랍니다.">
+                        진에어 인천행 수속 마감 예정 방송입니다. 탑승수속을 마치지 않으신 승객께서는 지금 즉시 진에어 카운터로 와 주시기 바랍니다.
+                    </p>
+                    <div class="flex items-center space-x-2">
+                        <button class="btn-play flex-1 py-2.5 bg-lj-lime text-slate-950 font-bold rounded-xl text-xs hover:brightness-110 active:scale-95 transition">▶ 재생 / 일시정지</button>
+                        <button class="btn-stop px-4 py-2.5 bg-slate-800 text-slate-300 font-bold rounded-xl text-xs hover:bg-slate-700 transition">■ 정지</button>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Card 5 -->
+            <article class="ann-card bg-lj-card border border-slate-800 rounded-2xl overflow-hidden" data-id="5">
+                <div class="card-header p-4 flex items-center justify-between cursor-pointer hover:bg-slate-800/50">
+                    <div class="flex items-center space-x-3">
+                        <span class="w-7 h-7 rounded-full bg-slate-800 text-lj-lime text-xs font-bold flex items-center justify-center border border-slate-700">5</span>
+                        <h3 class="font-bold text-slate-100 text-sm">Pre-BRDG (PAX who need assistance)</h3>
+                    </div>
+                    <span class="text-xs text-slate-500 font-mono">교통약자 우선 탑승</span>
+                </div>
+                <div class="card-body hidden p-4 pt-0 border-t border-slate-800/50 space-y-3 mt-3">
+                    <div class="progress-bar-wrap"><div class="progress-bar-fill"></div></div>
+                    <p class="ann-text text-slate-300 text-sm leading-relaxed p-3 bg-slate-900/60 rounded-xl border border-slate-800" data-template="진에어 {destination}행 {flightNumber}편의 탑승을 시작하겠습니더. 노약자나 어린이를 동반하신 승객께서는 먼저 탑승해 주시기 바랍니다.">
+                        진에어 인천행 LJ044편의 탑승을 시작하겠습니더. 노약자나 어린이를 동반하신 승객께서는 먼저 탑승해 주시기 바랍니다.
+                    </p>
+                    <div class="flex items-center space-x-2">
+                        <button class="btn-play flex-1 py-2.5 bg-lj-lime text-slate-950 font-bold rounded-xl text-xs hover:brightness-110 active:scale-95 transition">▶ 재생 / 일시정지</button>
+                        <button class="btn-stop px-4 py-2.5 bg-slate-800 text-slate-300 font-bold rounded-xl text-xs hover:bg-slate-700 transition">■ 정지</button>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Card 6 -->
+            <article class="ann-card bg-lj-card border border-slate-800 rounded-2xl overflow-hidden" data-id="6">
+                <div class="card-header p-4 flex items-center justify-between cursor-pointer hover:bg-slate-800/50">
+                    <div class="flex items-center space-x-3">
+                        <span class="w-7 h-7 rounded-full bg-slate-800 text-lj-lime text-xs font-bold flex items-center justify-center border border-slate-700">6</span>
+                        <h3 class="font-bold text-slate-100 text-sm">Commence Boarding (General)</h3>
+                    </div>
+                    <span class="text-xs text-slate-500 font-mono">일반 승객 탑승 안내</span>
+                </div>
+                <div class="card-body hidden p-4 pt-0 border-t border-slate-800/50 space-y-3 mt-3">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xs text-slate-400">게이트 번호 입력:</span>
+                        <input type="text" class="input-gate w-20 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-center text-white" value="1">
+                    </div>
+                    <div class="progress-bar-wrap"><div class="progress-bar-fill"></div></div>
+                    <p class="ann-text text-slate-300 text-sm leading-relaxed p-3 bg-slate-900/60 rounded-xl border border-slate-800" data-template="진에어 {destination}행 {flightNumber}편에 탑승하실 승객께서는 {gate}번 탑승구로 오시기 바랍니다.">
+                        진에어 인천행 LJ044편에 탑승하실 승객께서는 1번 탑승구로 오시기 바랍니다.
+                    </p>
+                    <div class="flex items-center space-x-2">
+                        <button class="btn-play flex-1 py-2.5 bg-lj-lime text-slate-950 font-bold rounded-xl text-xs hover:brightness-110 active:scale-95 transition">▶ 재생 / 일시정지</button>
+                        <button class="btn-stop px-4 py-2.5 bg-slate-800 text-slate-300 font-bold rounded-xl text-xs hover:bg-slate-700 transition">■ 정지</button>
+                    </div>
+                </div>
+            </article>
+
+        </section>
+    </main>
+
+    <!-- 스크립트 연결 -->
+    <script src="script.js"></script>
+</body>
+</html>
