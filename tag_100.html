@@ -3,18 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>진에어(Jin Air) TAG 지점 안내방송 시스템</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0B1320">
+<title>진에어(JIN AIR) TAG 공항 안내방송 플레이어</title>
 <style>
-/* ========================================================
-1. 디자인 시스템 & 변수 정의 (진에어 시그니처 테마)
-======================================================== */
 :root {
 --bg-main: #0B1320;
---bg-header: rgba(13, 23, 38, 0.95);
---bg-card: #142033;
---bg-card-inner: #0F1928;
---border-card: #1E2E48;
---border-card-hover: #2D4367;
+--bg-card: #131F33;
+--bg-card-inner: #0E1828;
+--bg-header: rgba(11, 19, 32, 0.94);
+--border-card: #223552;
+--border-focus: #B4DB2B;
 --lj-lime: #B4DB2B;
 --lj-lime-dim: rgba(180, 219, 43, 0.15);
 --lj-lime-glow: rgba(180, 219, 43, 0.4);
@@ -30,7 +30,6 @@
 --radius-full: 9999px;
 --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.35);
 }
-/* 핀치 줌 / 더블 탭 확대 방지 및 모바일 터치 최적화 */
 html, body {
 touch-action: manipulation;
 -webkit-text-size-adjust: 100%;
@@ -46,20 +45,19 @@ user-select: none;
 body {
 background-color: var(--bg-main);
 color: var(--text-main);
-font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Pretendard", Roboto, sans-serif;
+font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", Roboto, "Malgun Gothic", sans-serif;
 line-height: 1.5;
-padding-bottom: 80px;
+padding-bottom: 90px;
 min-height: 100vh;
 -webkit-font-smoothing: antialiased;
 }
-/* ========================================================
-2. 스타트 오버레이 (모바일 브라우저 오디오 언락)
-======================================================== */
+/* 1. 시작 오버레이 */
 #startOverlay {
 position: fixed;
 inset: 0;
 background: rgba(11, 19, 32, 0.98);
-backdrop-filter: blur(14px);
+backdrop-filter: blur(16px);
+-webkit-backdrop-filter: blur(16px);
 z-index: 99999;
 display: flex;
 flex-direction: column;
@@ -67,9 +65,15 @@ align-items: center;
 justify-content: center;
 padding: 24px;
 text-align: center;
+transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+#startOverlay.hidden {
+opacity: 0;
+visibility: hidden;
+pointer-events: none;
 }
 .overlay-content {
-max-width: 360px;
+max-width: 380px;
 width: 100%;
 }
 .logo-badge {
@@ -89,7 +93,8 @@ box-shadow: 0 0 16px var(--lj-lime-glow);
 font-size: 22px;
 font-weight: 800;
 color: #fff;
-margin-bottom: 8px;
+margin-bottom: 10px;
+line-height: 1.3;
 }
 .overlay-desc {
 font-size: 13px;
@@ -108,21 +113,20 @@ border: none;
 border-radius: var(--radius-md);
 cursor: pointer;
 box-shadow: 0 4px 20px var(--lj-lime-glow);
-transition: all 0.2s ease;
+transition: transform 0.15s ease, background 0.15s ease;
 }
 .btn-start:active {
-transform: scale(0.98);
+transform: scale(0.97);
 background: var(--lj-lime-hover);
 }
-/* ========================================================
-3. 상단 고정 헤더 & 조작 바
-======================================================== */
+/* 2. 상단 고정 헤더 */
 .top-header {
 position: sticky;
 top: 0;
 z-index: 1000;
 background: var(--bg-header);
 backdrop-filter: blur(14px);
+-webkit-backdrop-filter: blur(14px);
 border-bottom: 1px solid var(--border-card);
 padding: 12px 16px;
 box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
@@ -140,7 +144,6 @@ gap: 8px;
 font-size: 15px;
 font-weight: 800;
 color: #fff;
-letter-spacing: -0.3px;
 }
 .tag-chip {
 background: var(--lj-lime);
@@ -169,7 +172,6 @@ animation: pulse 2s infinite;
 0%, 100% { opacity: 1; }
 50% { opacity: 0.35; }
 }
-/* 편명 & 목적지 선택 버튼 */
 .selector-grid {
 display: grid;
 grid-template-columns: 1fr 1fr;
@@ -214,7 +216,6 @@ color: #0B1320;
 border-color: var(--lj-lime);
 box-shadow: 0 0 12px var(--lj-lime-glow);
 }
-/* 음성 설정 서랍 */
 .settings-drawer-toggle {
 display: flex;
 align-items: center;
@@ -266,11 +267,9 @@ outline: none;
 width: 100%;
 accent-color: var(--lj-lime);
 }
-/* ========================================================
-4. 방송 카드 레이아웃
-======================================================== */
+/* 3. 메인 컨테이너 및 카드 */
 .container {
-max-width: 620px;
+max-width: 640px;
 margin: 0 auto;
 padding: 16px 12px;
 }
@@ -334,7 +333,7 @@ padding: 2px 6px;
 border-radius: 4px;
 }
 .ann-title {
-font-size: 13.5px;
+font-size: 13px;
 font-weight: 700;
 color: #fff;
 }
@@ -357,7 +356,6 @@ background: var(--bg-card-inner);
 .ann-card.open .ann-body {
 display: block;
 }
-/* 입력 필드 */
 .inputs-wrap {
 display: flex;
 flex-wrap: wrap;
@@ -398,7 +396,6 @@ resize: vertical;
 .input-field input:focus, .input-field select:focus, .input-field textarea:focus {
 border-color: var(--lj-lime);
 }
-/* 반복 카운터 */
 .repeat-ctrl {
 display: flex;
 align-items: center;
@@ -442,7 +439,7 @@ transition: all 0.15s;
 background: var(--lj-lime);
 color: #0B1320;
 }
-/* 대본 상자 & 실시간 단어 하이라이트 */
+/* 4. 대본 상자 & 실시간 단어 하이라이트 */
 .script-box {
 background: var(--bg-main);
 border: 1px solid var(--border-card);
@@ -466,11 +463,6 @@ color: #0B1320 !important;
 font-weight: 800 !important;
 box-shadow: 0 0 10px var(--lj-lime-glow);
 }
-.var-tag {
-color: var(--lj-lime);
-font-weight: 700;
-}
-/* 영문 번역 툴팁 */
 .tooltip-en-box {
 display: none;
 background: #172439;
@@ -486,7 +478,7 @@ font-style: italic;
 .tooltip-en-box.show {
 display: block;
 }
-/* 실시간 재생 진행 바 */
+/* 5. 실시간 재생 진행 바 */
 .progress-bar-wrap {
 width: 100%;
 height: 5px;
@@ -504,7 +496,6 @@ box-shadow: 0 0 10px var(--lj-lime);
 transition: width 0.12s ease-out;
 border-radius: var(--radius-full);
 }
-/* 컨트롤 버튼 */
 .controls-row {
 display: flex;
 align-items: center;
@@ -559,10 +550,9 @@ border-color: var(--lj-lime);
 color: var(--lj-lime);
 background: var(--lj-lime-dim);
 }
-/* 푸터 */
 .footer {
 text-align: center;
-margin-top: 32px;
+margin-top: 36px;
 font-size: 11px;
 color: var(--text-dim);
 line-height: 1.6;
@@ -570,29 +560,25 @@ line-height: 1.6;
 </style>
 </head>
 <body>
-<!-- 1. 스타트 오버레이 -->
+<!-- 1. 시작 오버레이 -->
 <div id="startOverlay">
 <div class="overlay-content">
-<div class="logo-badge">JIN AIR TAG STATION</div>
-<h1 class="overlay-title">안내방송 플레이어</h1>
-<p class="overlay-desc">
-보홀 팡라오 국제공항 지점 안내방송 시스템입니다.
-
-아래 버튼을 눌러 오디오 엔진을 시작하세요.
-</p>
-<button class="btn-start" id="btnStartApp">▶ 진에어 방송 플레이어 시작</button>
+<div class="logo-badge">JIN AIR BOHOL (TAG)</div>
+<h1 class="overlay-title">진에어 공항 안내방송</h1>
+<p class="overlay-desc">모바일 브라우저의 오디오 재생 엔진 활성화를 위해 아래 시작 버튼을 눌러주세요.</p>
+<button class="btn-start" id="btnStart">▶ 진에어 방송 플레이어 시작</button>
 </div>
 </div>
 <!-- 2. 상단 고정 헤더 -->
 <header class="top-header">
 <div class="header-branding">
 <div class="brand-title">
-<span>✈️ JIN AIR TAG</span>
-<span class="tag-chip">BOHOL</span>
+<span>JIN AIR</span>
+<span class="tag-chip">TAG BOHOL</span>
 </div>
 <div class="status-badge">
 <span class="status-dot"></span>
-<span id="txtEngineStatus">TTS 준비 완료</span>
+<span id="systemStatus">Ready</span>
 </div>
 </div>
 <!-- 편명 & 목적지 선택 -->
@@ -642,10 +628,10 @@ line-height: 1.6;
 </div>
 </div>
 </header>
-<!-- 3. 메인 안내방송 카드 컨테이너 -->
+<!-- 3. 메인 방송 카드 목록 -->
 <main class="container">
-<div class="ann-list">
-<!-- #1 Final Call for Check-in (No names) -->
+<div class="ann-list" id="annCardList">
+<!-- #1 -->
 <div class="ann-card" data-ann-id="1">
 <div class="ann-header">
 <div class="ann-title-wrap">
@@ -666,7 +652,7 @@ line-height: 1.6;
 </div>
 </div>
 </div>
-<!-- #2 Final Call for Check-in (With names) -->
+<!-- #2 -->
 <div class="ann-card" data-ann-id="2">
 <div class="ann-header">
 <div class="ann-title-wrap">
@@ -703,7 +689,7 @@ line-height: 1.6;
 </div>
 </div>
 </div>
-<!-- #3 Baggage Inspection Call -->
+<!-- #3 -->
 <div class="ann-card" data-ann-id="3">
 <div class="ann-header">
 <div class="ann-title-wrap">
@@ -740,7 +726,7 @@ line-height: 1.6;
 </div>
 </div>
 </div>
-<!-- #4 Congested, proceed to IMMG -->
+<!-- #4 -->
 <div class="ann-card" data-ann-id="4">
 <div class="ann-header">
 <div class="ann-title-wrap">
@@ -761,7 +747,7 @@ line-height: 1.6;
 </div>
 </div>
 </div>
-<!-- #5 Pre-BRDG (PAX who need assistance) -->
+<!-- #5 -->
 <div class="ann-card" data-ann-id="5">
 <div class="ann-header">
 <div class="ann-title-wrap">
@@ -782,7 +768,7 @@ line-height: 1.6;
 </div>
 </div>
 </div>
-<!-- #6 Commence Boarding (General) -->
+<!-- #6 -->
 <div class="ann-card" data-ann-id="6">
 <div class="ann-header">
 <div class="ann-title-wrap">
@@ -817,7 +803,7 @@ line-height: 1.6;
 </div>
 </div>
 </div>
-<!-- #7 In the middle of Boarding -->
+<!-- #7 -->
 <div class="ann-card" data-ann-id="7">
 <div class="ann-header">
 <div class="ann-title-wrap">
@@ -852,7 +838,7 @@ line-height: 1.6;
 </div>
 </div>
 </div>
-<!-- #8 Final Call for Boarding -->
+<!-- #8 -->
 <div class="ann-card" data-ann-id="8">
 <div class="ann-header">
 <div class="ann-title-wrap">
@@ -887,7 +873,7 @@ line-height: 1.6;
 </div>
 </div>
 </div>
-<!-- #9 Final Call for Boarding (With Name) -->
+<!-- #9 -->
 <div class="ann-card" data-ann-id="9">
 <div class="ann-header">
 <div class="ann-title-wrap">
@@ -928,7 +914,7 @@ line-height: 1.6;
 </div>
 </div>
 </div>
-<!-- #10 Gate CHG to #1~#7 -->
+<!-- #10 -->
 <div class="ann-card" data-ann-id="10">
 <div class="ann-header">
 <div class="ann-title-wrap">
@@ -967,7 +953,7 @@ line-height: 1.6;
 </div>
 </div>
 </div>
-<!-- #11 Gate CHG to #8~#10 -->
+<!-- #11 -->
 <div class="ann-card" data-ann-id="11">
 <div class="ann-header">
 <div class="ann-title-wrap">
@@ -998,7 +984,7 @@ line-height: 1.6;
 </div>
 </div>
 </div>
-<!-- #12 Power Banks Regulations (KR) -->
+<!-- #12 -->
 <div class="ann-card" data-ann-id="12">
 <div class="ann-header">
 <div class="ann-title-wrap">
@@ -1019,7 +1005,7 @@ line-height: 1.6;
 </div>
 </div>
 </div>
-<!-- #13 Power Banks Regulations (EN) -->
+<!-- #13 -->
 <div class="ann-card" data-ann-id="13">
 <div class="ann-header">
 <div class="ann-title-wrap">
@@ -1040,7 +1026,7 @@ line-height: 1.6;
 </div>
 </div>
 </div>
-<!-- #14 FLT DLY – A/C CONX (Disembarkation) -->
+<!-- #14 -->
 <div class="ann-card" data-ann-id="14">
 <div class="ann-header">
 <div class="ann-title-wrap">
@@ -1078,7 +1064,7 @@ line-height: 1.6;
 </div>
 </div>
 </div>
-<!-- #15 FLT DLY – Cabin Preparation -->
+<!-- #15 -->
 <div class="ann-card" data-ann-id="15">
 <div class="ann-header">
 <div class="ann-title-wrap">
@@ -1139,448 +1125,425 @@ line-height: 1.6;
 </div>
 </div>
 </div>
+</main>
 <footer class="footer">
 <p>진에어 보홀(TAG) 지점 탑승구 및 카운터 전용 방송 시스템</p>
 <p>Jin Air Bohol Panglao International Airport Ground Operations</p>
 </footer>
-</main>
-<!-- ========================================================
-5. 핵심 자바스크립트 엔진 (TTS, 치환, 하이라이트, 진행바)
-======================================================== -->
+<!-- 4. 완벽 통합 자바스크립트 엔진 -->
 <script>
-/* 전역 설정 및 상태 */
-const state = {
-flight: localStorage.getItem('lj_flight') || 'LJ044',
-dest: localStorage.getItem('lj_dest') || 'ICN',
-voiceKo: localStorage.getItem('lj_voice_ko') || '',
-voiceEn: localStorage.getItem('lj_voice_en') || '',
-speed: 1.0,
-pitch: 1.0,
-isPlaying: false,
-activeCard: null,
-progressTimer: null
-};
-const destMap = {
-'ICN': { ko: '인천', en: 'Incheon' },
-'PUS': { ko: '부산', en: 'Busan' }
-};
-/* LJ044 -> "엘제이, 공, 사, 사" 표준 항공 한글 발음 치환 */
-function getFlightSpokenKorean(flt) {
-const numMap = { '0': '공', '1': '일', '2': '이', '3': '삼', '4': '사', '5': '오', '6': '육', '7': '칠', '8': '팔', '9': '구' };
-let res = '엘제이, ';
-const nums = flt.replace(/[^0-9]/g, '');
-const spoken = nums.split('').map(n => numMap[n] || n).join(', ');
-return res + spoken;
-}
-/* 1. 스타트 오버레이 & 오디오 언락 */
+(function() {
+// 상태 관리 변수
+let currentFlight = 'LJ044';
+let currentDest = 'ICN';
+let voicesKo = [];
+let voicesEn = [];
+let activeUtterances = [];
+let activeCard = null;
+let isPlaying = false;
+let wakeLock = null;
+let progressTimer = null;
+const airportNamesKo = { ICN: '인천', PUS: '부산' };
+const airportNamesEn = { ICN: 'Incheon', PUS: 'Busan' };
+// DOM 요소
 const startOverlay = document.getElementById('startOverlay');
-const btnStartApp = document.getElementById('btnStartApp');
-btnStartApp.addEventListener('click', () => {
-// 무음 발화로 모바일 브라우저 오디오 정책 해제
+const btnStart = document.getElementById('btnStart');
+const systemStatus = document.getElementById('systemStatus');
+const flightSelector = document.getElementById('flightSelector');
+const destSelector = document.getElementById('destSelector');
+const btnToggleSettings = document.getElementById('btnToggleSettings');
+const settingsPanel = document.getElementById('settingsPanel');
+const settingsChevron = document.getElementById('settingsChevron');
+const selectVoiceKo = document.getElementById('selectVoiceKo');
+const selectVoiceEn = document.getElementById('selectVoiceEn');
+const rangeSpeed = document.getElementById('rangeSpeed');
+const rangePitch = document.getElementById('rangePitch');
+const lblSpeed = document.getElementById('lblSpeed');
+const lblPitch = document.getElementById('lblPitch');
+// 1. 시작 버튼 및 오디오 언락
+function handleStartApp() {
+if (startOverlay) {
+startOverlay.classList.add('hidden');
+}
+// 오디오 엔진 잠금 해제 (더미 발화)
 if ('speechSynthesis' in window) {
-const silent = new SpeechSynthesisUtterance('');
-silent.volume = 0;
+window.speechSynthesis.cancel();
+const dummy = new SpeechSynthesisUtterance('');
+window.speechSynthesis.speak(dummy);
+loadVoices();
+}
+requestScreenWakeLock();
+startKeepAlive();
+updateAllCards();
+}
+btnStart.addEventListener('click', handleStartApp);
+btnStart.addEventListener('touchend', function(e) {
+e.preventDefault();
+handleStartApp();
+});
+// 2. 화면 꺼짐 방지 (Wake Lock API)
+async function requestScreenWakeLock() {
+try {
+if ('wakeLock' in navigator) {
+wakeLock = await navigator.wakeLock.request('screen');
+}
+} catch (err) {}
+}
+// 3. 모바일 TTS 엔진 절전 방지 (10초 주기 무음 발화)
+function startKeepAlive() {
+setInterval(() => {
+if (!isPlaying && 'speechSynthesis' in window) {
+const silent = new SpeechSynthesisUtterance(' ');
+silent.volume = 0.01;
 window.speechSynthesis.speak(silent);
 }
-startOverlay.style.display = 'none';
-// 10초 주기 무음 발화 Keep-Alive (모바일 브라우저 잠자기 방지)
-setInterval(() => {
-if (!state.isPlaying && 'speechSynthesis' in window) {
-const u = new SpeechSynthesisUtterance(' ');
-u.volume = 0.01;
-window.speechSynthesis.speak(u);
-}
 }, 10000);
-});
-/* 2. TTS 음성 목록 로딩 */
-let availableVoices = [];
-function loadVoices() {
-if (!('speechSynthesis' in window)) {
-document.getElementById('txtEngineStatus').innerText = 'TTS 미지원 브라우저';
-return;
 }
-availableVoices = window.speechSynthesis.getVoices();
-if (!availableVoices.length) return;
-const selKo = document.getElementById('selectVoiceKo');
-const selEn = document.getElementById('selectVoiceEn');
-selKo.innerHTML = '';
-selEn.innerHTML = '';
-availableVoices.forEach((v, idx) => {
+// 4. 음성 로드 및 설정 셀렉터 채우기
+function loadVoices() {
+if (!('speechSynthesis' in window)) return;
+const allVoices = window.speechSynthesis.getVoices();
+voicesKo = allVoices.filter(v => v.lang.startsWith('ko') || v.lang.includes('KR'));
+voicesEn = allVoices.filter(v => v.lang.startsWith('en') || v.lang.includes('US') || v.lang.includes('GB'));
+selectVoiceKo.innerHTML = '';
+voicesKo.forEach(v => {
 const opt = document.createElement('option');
 opt.value = v.name;
 opt.textContent = ⁠${v.name} (${v.lang})⁠;
-if (v.lang.startsWith('ko')) {
-selKo.appendChild(opt.cloneNode(true));
-}
-if (v.lang.startsWith('en')) {
-selEn.appendChild(opt.cloneNode(true));
-}
+selectVoiceKo.appendChild(opt);
 });
-// 기존 저장된 음성이 있으면 복원
-if (state.voiceKo && selKo.querySelector(⁠option[value="${state.voiceKo}"]⁠)) {
-selKo.value = state.voiceKo;
-}
-if (state.voiceEn && selEn.querySelector(⁠option[value="${state.voiceEn}"]⁠)) {
-selEn.value = state.voiceEn;
+selectVoiceEn.innerHTML = '';
+voicesEn.forEach(v => {
+const opt = document.createElement('option');
+opt.value = v.name;
+opt.textContent = ⁠${v.name} (${v.lang})⁠;
+selectVoiceEn.appendChild(opt);
+});
+if (voicesKo.length > 0 || voicesEn.length > 0) {
+systemStatus.textContent = 'Online';
 }
 }
 if ('speechSynthesis' in window) {
 window.speechSynthesis.onvoiceschanged = loadVoices;
 loadVoices();
 }
-/* 음성 설정 서랍 및 슬라이더 */
-const btnToggleSettings = document.getElementById('btnToggleSettings');
-const settingsPanel = document.getElementById('settingsPanel');
-const settingsChevron = document.getElementById('settingsChevron');
+// 5. 설정 패널 토글 및 슬라이더
 btnToggleSettings.addEventListener('click', () => {
 const isOpen = settingsPanel.classList.toggle('open');
 settingsChevron.textContent = isOpen ? '▲' : '▼';
 });
-document.getElementById('selectVoiceKo').addEventListener('change', (e) => {
-state.voiceKo = e.target.value;
-localStorage.setItem('lj_voice_ko', state.voiceKo);
-});
-document.getElementById('selectVoiceEn').addEventListener('change', (e) => {
-state.voiceEn = e.target.value;
-localStorage.setItem('lj_voice_en', state.voiceEn);
-});
-const rangeSpeed = document.getElementById('rangeSpeed');
-const lblSpeed = document.getElementById('lblSpeed');
 rangeSpeed.addEventListener('input', (e) => {
-state.speed = parseFloat(e.target.value);
-lblSpeed.textContent = state.speed.toFixed(2);
+lblSpeed.textContent = e.target.value;
 });
-const rangePitch = document.getElementById('rangePitch');
-const lblPitch = document.getElementById('lblPitch');
 rangePitch.addEventListener('input', (e) => {
-state.pitch = parseFloat(e.target.value);
-lblPitch.textContent = state.pitch.toFixed(2);
+lblPitch.textContent = e.target.value;
 });
-/* 3. 편명 & 목적지 선택 버튼 */
-const flightBtns = document.querySelectorAll('#flightSelector .btn-toggle');
-flightBtns.forEach(btn => {
-btn.addEventListener('click', () => {
-flightBtns.forEach(b => b.classList.remove('active'));
+// 6. 편명 및 목적지 토글
+flightSelector.addEventListener('click', (e) => {
+const btn = e.target.closest('.btn-toggle');
+if (!btn) return;
+flightSelector.querySelectorAll('.btn-toggle').forEach(b => b.classList.remove('active'));
 btn.classList.add('active');
-state.flight = btn.dataset.flight;
-localStorage.setItem('lj_flight', state.flight);
-renderAllCards();
+currentFlight = btn.dataset.flight;
+updateAllCards();
 });
-});
-const destBtns = document.querySelectorAll('#destSelector .btn-toggle');
-destBtns.forEach(btn => {
-btn.addEventListener('click', () => {
-destBtns.forEach(b => b.classList.remove('active'));
+destSelector.addEventListener('click', (e) => {
+const btn = e.target.closest('.btn-toggle');
+if (!btn) return;
+destSelector.querySelectorAll('.btn-toggle').forEach(b => b.classList.remove('active'));
 btn.classList.add('active');
-state.dest = btn.dataset.dest;
-localStorage.setItem('lj_dest', state.dest);
-renderAllCards();
+currentDest = btn.dataset.dest;
+updateAllCards();
 });
+// 7. 발화용 편명 한글 변환
+function formatFlightKo(flight) {
+if (flight === 'LJ044') return '엘제이 공 사 사';
+if (flight === 'LJ046') return '엘제이 공 사 육';
+return flight;
+}
+// 8. 카드별 실시간 문구 조립 및 화면 반영
+function buildCardText(card) {
+const id = card.dataset.annId;
+const scriptBox = card.querySelector('.script-box');
+if (!scriptBox) return { spoken: '', html: '' };
+let template = scriptBox.dataset.template || scriptBox.textContent;
+const destKo = airportNamesKo[currentDest] || currentDest;
+const destEn = airportNamesEn[currentDest] || currentDest;
+const flightKo = formatFlightKo(currentFlight);
+let spoken = template;
+spoken = spoken.replaceAll('{destination}', destKo);
+spoken = spoken.replaceAll('{flightNumber}', flightKo);
+let namesVal = '';
+const nameInput = card.querySelector('.input-names');
+if (nameInput) {
+const rawNames = nameInput.value.trim();
+if (rawNames) {
+const repeatVal = parseInt(card.querySelector('.repeat-val')?.textContent || '2', 10);
+namesVal = Array(repeatVal).fill(rawNames).join(', ');
+} else {
+namesVal = '승객';
+}
+}
+spoken = spoken.replaceAll('{names}', namesVal);
+const gateInput = card.querySelector('.input-gate');
+if (gateInput) {
+const gNum = gateInput.value || '3';
+const rVal = parseInt(card.querySelector('.repeat-val')?.textContent || '2', 10);
+const gateSpoken = Array(rVal).fill(⁠${gNum}번⁠).join(', ');
+spoken = spoken.replaceAll('{gate}', gateSpoken);
+}
+const gateSelect = card.querySelector('.input-gate-select');
+if (gateSelect) {
+spoken = spoken.replaceAll('{gate}', ⁠${gateSelect.value}번⁠);
+}
+const floorInput = card.querySelector('.input-floor');
+if (floorInput && gateInput) {
+const flVal = floorInput.value || '1';
+const gtVal = gateInput.value || '5';
+const rVal = parseInt(card.querySelector('.repeat-val')?.textContent || '2', 10);
+const fgSpoken = Array(rVal).fill(⁠${flVal}층 ${gtVal}번⁠).join(', ');
+spoken = spoken.replaceAll('{floorGate}', fgSpoken);
+}
+const dHourInput = card.querySelector('.input-delay-hour');
+const dMinInput = card.querySelector('.input-delay-min');
+if (dHourInput && dMinInput) {
+const h = parseInt(dHourInput.value || '0', 10);
+const m = parseInt(dMinInput.value || '0', 10);
+let delayStr = '';
+if (h > 0) delayStr += ⁠${h}시간 ⁠;
+if (m > 0 || h === 0) delayStr += ⁠${m}분⁠;
+const rVal = parseInt(card.querySelector('.repeat-val')?.textContent || '2', 10);
+const delaySpoken = Array(rVal).fill(delayStr.trim()).join(', ');
+spoken = spoken.replaceAll('{delayTime}', delaySpoken);
+}
+// EN 툴팁 업데이트
+const tooltip = card.querySelector('.tooltip-en-box');
+if (tooltip && tooltip.dataset.enTemplate) {
+let enText = tooltip.dataset.enTemplate;
+enText = enText.replaceAll('{destEn}', destEn);
+enText = enText.replaceAll('{flightNumber}', currentFlight);
+enText = enText.replaceAll('{gateNum}', gateInput ? gateInput.value : (gateSelect ? gateSelect.value : '3'));
+enText = enText.replaceAll('{floorNum}', floorInput ? floorInput.value : '1');
+enText = enText.replaceAll('{namesEn}', nameInput ? (nameInput.value.trim() || 'Passenger') : '');
+tooltip.textContent = enText;
+}
+// 단어 토큰화 (실시간 하이라이트 준비)
+const tokens = spoken.split(/(\s+)/);
+const tokenHtml = tokens.map((tk, idx) => {
+if (/^\s+$/.test(tk)) return tk;
+return ⁠<span class="word-token" id="token-${id}-${idx}">${tk}</span>⁠;
+}).join('');
+return { spoken, html: tokenHtml };
+}
+function updateAllCards() {
+document.querySelectorAll('.ann-card').forEach(card => {
+if (card.dataset.annId === 'custom') return;
+const { html } = buildCardText(card);
+const scriptBox = card.querySelector('.script-box');
+if (scriptBox && html) {
+scriptBox.innerHTML = html;
+}
 });
-// 초기 활성화 상태 복원
-document.querySelector(⁠#flightSelector [data-flight="${state.flight}"]⁠)?.classList.add('active');
-document.querySelector(⁠#destSelector [data-dest="${state.dest}"]⁠)?.classList.add('active');
-/* 4. 카드 아코디언 열고 닫기 */
+}
+// 9. 카드 아코디언 및 버튼 이벤트 등록
 document.querySelectorAll('.ann-card').forEach(card => {
 const header = card.querySelector('.ann-header');
 header.addEventListener('click', () => {
-const isCurrentOpen = card.classList.contains('open');
-// 다른 열린 카드 닫기
-document.querySelectorAll('.ann-card.open').forEach(c => {
-if (c !== card) c.classList.remove('open');
+const isOpen = card.classList.contains('open');
+document.querySelectorAll('.ann-card').forEach(c => c.classList.remove('open'));
+if (!isOpen) {
+card.classList.add('open');
+updateCard(card);
+}
+stopSpeech();
 });
-card.classList.toggle('open', !isCurrentOpen);
-stopCurrentSpeech();
-});
-});
-/* 5. 영문 번역 툴팁 토글 */
-document.querySelectorAll('.btn-en-toggle').forEach(btn => {
-btn.addEventListener('click', (e) => {
+// EN 버튼 토글
+const btnEn = card.querySelector('.btn-en-toggle');
+if (btnEn) {
+btnEn.addEventListener('click', (e) => {
 e.stopPropagation();
-const card = btn.closest('.ann-card');
 const tooltip = card.querySelector('.tooltip-en-box');
 if (tooltip) {
-const isShow = tooltip.classList.toggle('show');
-btn.classList.toggle('active', isShow);
+const show = tooltip.classList.toggle('show');
+btnEn.classList.toggle('active', show);
 }
 });
-});
-/* 6. 반복 카운터 (+ / -) */
-document.querySelectorAll('.repeat-ctrl').forEach(ctrl => {
-const valEl = ctrl.querySelector('.repeat-val');
-const minus = ctrl.querySelector('.minus');
-const plus = ctrl.querySelector('.plus');
-minus.addEventListener('click', (e) => {
-e.stopPropagation();
-let cur = parseInt(valEl.dataset.repeat, 10) || 1;
-if (cur > 1) {
-cur -= 1;
-valEl.dataset.repeat = cur;
-valEl.textContent = cur;
-renderCard(ctrl.closest('.ann-card'));
+}
+// 반복 횟수 카운터
+const minusBtn = card.querySelector('.repeat-btn.minus');
+const plusBtn = card.querySelector('.repeat-btn.plus');
+const repeatVal = card.querySelector('.repeat-val');
+if (minusBtn && plusBtn && repeatVal) {
+minusBtn.addEventListener('click', () => {
+let v = parseInt(repeatVal.textContent, 10);
+if (v > 1) {
+repeatVal.textContent = v - 1;
+updateCard(card);
 }
 });
-plus.addEventListener('click', (e) => {
-e.stopPropagation();
-let cur = parseInt(valEl.dataset.repeat, 10) || 1;
-if (cur < 5) {
-cur += 1;
-valEl.dataset.repeat = cur;
-valEl.textContent = cur;
-renderCard(ctrl.closest('.ann-card'));
+plusBtn.addEventListener('click', () => {
+let v = parseInt(repeatVal.textContent, 10);
+if (v < 5) {
+repeatVal.textContent = v + 1;
+updateCard(card);
 }
 });
+}
+// 입력 필드 수정 시 즉시 문구 반영
+card.querySelectorAll('input, select, textarea').forEach(input => {
+input.addEventListener('input', () => updateCard(card));
 });
-/* 간이 로컬 영문 성명 -> 한글 발음 변환 (오프라인 지원) */
-function convertEnglishNameToKorean(text) {
-if (!text.trim()) return text;
-// 일반적인 성씨 및 대표 영문 발음 사전
-const nameDict = {
+// 이름 발음 변환 버튼
+const btnTrans = card.querySelector('.btn-trans');
+if (btnTrans) {
+btnTrans.addEventListener('click', () => {
+const nameInput = card.querySelector('.input-names');
+if (!nameInput || !nameInput.value.trim()) return;
+const original = nameInput.value.trim();
+// 간단 로마자 발음 지원
+const transMap = {
 'KIM': '김', 'LEE': '이', 'PARK': '박', 'CHOI': '최', 'JUNG': '정', 'JEONG': '정',
 'KANG': '강', 'CHO': '조', 'YOON': '윤', 'JANG': '장', 'LIM': '임', 'HAN': '한',
 'OH': '오', 'SEO': '서', 'SHIN': '신', 'KWON': '권', 'HWANG': '황', 'AHN': '안',
-'SONG': '송', 'JEON': '전', 'HONG': '홍', 'YOO': '유', 'MIN': '민', 'MOON': '문',
-'GILDONG': '길동', 'CHEOLSU': '철수', 'YOUNGHEE': '영희', 'JIMIN': '지민'
+'SONG': '송', 'JEON': '전', 'HONG': '홍', 'YOO': '유', 'MIN': '민', 'JIN': '진'
 };
-let result = text.toUpperCase();
-for (const [en, ko] of Object.entries(nameDict)) {
-const regex = new RegExp(⁠\\b${en}\\b⁠, 'g');
-result = result.replace(regex, ko);
+let converted = original.toUpperCase();
+Object.keys(transMap).forEach(k => {
+const reg = new RegExp(⁠\\b${k}\\b⁠, 'g');
+converted = converted.replace(reg, transMap[k]);
+});
+nameInput.value = converted;
+updateCard(card);
+});
 }
-return result;
+// 재생 & 정지 버튼
+const btnPlay = card.querySelector('.btn-play');
+const btnStop = card.querySelector('.btn-stop');
+if (btnPlay) {
+btnPlay.addEventListener('click', () => playAnnouncement(card));
 }
-document.querySelectorAll('.btn-trans').forEach(btn => {
-btn.addEventListener('click', (e) => {
-e.stopPropagation();
-const card = btn.closest('.ann-card');
-const txtArea = card.querySelector('.input-names');
-if (txtArea && txtArea.value.trim()) {
-txtArea.value = convertEnglishNameToKorean(txtArea.value);
-renderCard(card);
+if (btnStop) {
+btnStop.addEventListener('click', () => stopSpeech());
 }
 });
-});
-/* 입력값 변경 시 실시간 반영 */
-document.querySelectorAll('.ann-card input, .ann-card select, .ann-card textarea').forEach(input => {
-input.addEventListener('input', () => {
-renderCard(input.closest('.ann-card'));
-});
-});
-/* 7. 카드 본문 렌더링 & 단어 토큰화 (Bug 7-1 완벽 해결) */
-function buildCardData(card) {
-const annId = card.dataset.annId;
-const destKo = destMap[state.dest]?.ko || '인천';
-const destEn = destMap[state.dest]?.en || 'Incheon';
-const fltSpoken = getFlightSpokenKorean(state.flight);
-let names = '승객';
-let namesEn = 'Passenger';
-const nameArea = card.querySelector('.input-names');
-if (nameArea && nameArea.value.trim()) {
-const rawNames = nameArea.value.trim();
-const repeatCount = parseInt(card.querySelector('.repeat-val')?.dataset.repeat || '2', 10);
-const list = Array(repeatCount).fill(rawNames).join(', ');
-names = list;
-namesEn = rawNames;
-}
-let gate = '3번';
-let gateNum = '3';
-const gateInput = card.querySelector('.input-gate');
-const gateSelect = card.querySelector('.input-gate-select');
-if (gateInput) gateNum = gateInput.value || '3';
-if (gateSelect) gateNum = gateSelect.value;
-const gateRepeat = parseInt(card.querySelector('.repeat-ctrl .repeat-val')?.dataset.repeat || '2', 10);
-gate = Array(gateRepeat).fill(⁠${gateNum}번⁠).join(', ');
-let floorNum = '1';
-let floorGate = '1층 5번';
-const floorInput = card.querySelector('.input-floor');
-if (floorInput) {
-floorNum = floorInput.value || '1';
-floorGate = Array(gateRepeat).fill(⁠${floorNum}층 ${gateNum}번⁠).join(', ');
-}
-let delayTime = '1시간 30분';
-let delayTimeEn = '1 hour and 30 minutes';
-const delayHour = card.querySelector('.input-delay-hour');
-const delayMin = card.querySelector('.input-delay-min');
-if (delayHour && delayMin) {
-const h = parseInt(delayHour.value || '0', 10);
-const m = parseInt(delayMin.value || '0', 10);
-const delayRepeat = parseInt(card.querySelector('.repeat-ctrl .repeat-val')?.dataset.repeat || '2', 10);
-let tStr = '';
-if (h > 0) tStr += ⁠${h}시간 ⁠;
-if (m > 0) tStr += ⁠${m}분⁠;
-if (!tStr) tStr = '30분';
-delayTime = Array(delayRepeat).fill(tStr.trim()).join(', ');
-let tStrEn = '';
-if (h > 0) tStrEn += ⁠${h} hour${h > 1 ? 's' : ''} ⁠;
-if (m > 0) tStrEn += ⁠${m} minute${m > 1 ? 's' : ''}⁠;
-delayTimeEn = tStrEn.trim() || '30 minutes';
-}
-return {
-'{destination}': destKo,
-'{destEn}': destEn,
-'{flightNumber}': (annId === '13' ? state.flight : fltSpoken),
-'{names}': names,
-'{namesEn}': namesEn,
-'{gate}': gate,
-'{gateNum}': gateNum,
-'{floorNum}': floorNum,
-'{floorGate}': floorGate,
-'{delayTime}': delayTime,
-'{delayTimeEn}': delayTimeEn
-};
-}
-function renderCard(card) {
-if (!card || card.dataset.annId === 'custom') return;
+function updateCard(card) {
+if (card.dataset.annId === 'custom') return;
+const { html } = buildCardText(card);
 const scriptBox = card.querySelector('.script-box');
-const tooltipBox = card.querySelector('.tooltip-en-box');
-if (!scriptBox) return;
-const template = scriptBox.dataset.template;
-const enTemplate = tooltipBox?.dataset.enTemplate;
-const replacements = buildCardData(card);
-// 한국어 본문 치환 및 단어 스팬 래핑 (단어 하이라이트용)
-let fullText = template;
-for (const [key, val] of Object.entries(replacements)) {
-fullText = fullText.replaceAll(key, val);
-}
-// 단어 토큰 단위로 분할하여 span 래핑
-const tokens = fullText.split(' ');
-scriptBox.innerHTML = tokens.map((word, i) => ⁠<span class="word-token" data-word-idx="${i}">${word}</span>⁠).join(' ');
-// 영문 툴팁 치환
-if (tooltipBox && enTemplate) {
-let fullEn = enTemplate;
-for (const [key, val] of Object.entries(replacements)) {
-fullEn = fullEn.replaceAll(key, val);
-}
-tooltipBox.textContent = fullEn;
+if (scriptBox && html) {
+scriptBox.innerHTML = html;
 }
 }
-function renderAllCards() {
-document.querySelectorAll('.ann-card').forEach(renderCard);
+// 10. 오디오 재생 엔진 & 하이라이트 & 진행 바 제어
+function playAnnouncement(card) {
+stopSpeech();
+activeCard = card;
+card.classList.add('playing');
+isPlaying = true;
+const id = card.dataset.annId;
+let fullText = '';
+if (id === 'custom') {
+fullText = document.getElementById('customTextInput').value.trim();
+if (!fullText) return;
+} else {
+const { spoken } = buildCardText(card);
+fullText = spoken;
 }
-renderAllCards();
-/* 8. 재생, 정지, 실시간 단어 하이라이트 & 진행 바 제어 */
-function stopCurrentSpeech() {
+const speed = parseFloat(rangeSpeed.value);
+const pitch = parseFloat(rangePitch.value);
+const progressBar = card.querySelector('.progress-bar-fill');
+// 발화 세그먼트 생성
+const utterance = new SpeechSynthesisUtterance(fullText);
+utterance.rate = speed;
+utterance.pitch = pitch;
+// 언어 감지 및 음성 할당
+const isEnglishOnly = (id === '13') || (/^[A-Za-z0-9\s.,!?-]+$/.test(fullText));
+if (isEnglishOnly) {
+utterance.lang = 'en-US';
+const selectedEnName = selectVoiceEn.value;
+const matchedEn = voicesEn.find(v => v.name === selectedEnName);
+if (matchedEn) utterance.voice = matchedEn;
+} else {
+utterance.lang = 'ko-KR';
+const selectedKoName = selectVoiceKo.value;
+const matchedKo = voicesKo.find(v => v.name === selectedKoName);
+if (matchedKo) utterance.voice = matchedKo;
+}
+// 진행 바 시뮬레이션 타이머
+const estimatedDurationMs = Math.max(2500, (fullText.length * 280) / speed);
+const startTime = Date.now();
+if (progressBar) {
+progressBar.style.width = '0%';
+clearInterval(progressTimer);
+progressTimer = setInterval(() => {
+const elapsed = Date.now() - startTime;
+const pct = Math.min(96, (elapsed / estimatedDurationMs) * 100);
+progressBar.style.width = ⁠${pct}%⁠;
+}, 100);
+}
+// 실시간 단어 하이라이트 (onboundary)
+const tokens = card.querySelectorAll('.word-token');
+utterance.onboundary = (e) => {
+if (e.name === 'word' && tokens.length > 0) {
+tokens.forEach(tk => tk.classList.remove('highlight'));
+const charIdx = e.charIndex;
+let acc = 0;
+for (let i = 0; i < tokens.length; i++) {
+const len = tokens[i].textContent.length;
+if (charIdx >= acc && charIdx < acc + len) {
+tokens[i].classList.add('highlight');
+break;
+}
+acc += len;
+}
+}
+};
+utterance.onend = () => {
+finishSpeech(card);
+};
+utterance.onerror = () => {
+finishSpeech(card);
+};
+activeUtterances = [utterance];
+window.speechSynthesis.speak(utterance);
+}
+function finishSpeech(card) {
+if (card) {
+card.classList.remove('playing');
+card.querySelectorAll('.word-token').forEach(tk => tk.classList.remove('highlight'));
+const pBar = card.querySelector('.progress-bar-fill');
+if (pBar) {
+pBar.style.width = '100%';
+setTimeout(() => { pBar.style.width = '0%'; }, 400);
+}
+}
+clearInterval(progressTimer);
+isPlaying = false;
+activeCard = null;
+}
+function stopSpeech() {
 if ('speechSynthesis' in window) {
 window.speechSynthesis.cancel();
 }
-if (state.progressTimer) {
-clearInterval(state.progressTimer);
-state.progressTimer = null;
+if (activeCard) {
+finishSpeech(activeCard);
 }
-if (state.activeCard) {
-state.activeCard.classList.remove('playing');
-const fill = state.activeCard.querySelector('.progress-bar-fill');
-if (fill) fill.style.width = '0%';
-state.activeCard.querySelectorAll('.word-token.highlight').forEach(el => el.classList.remove('highlight'));
 }
-state.isPlaying = false;
-state.activeCard = null;
-}
-function playCard(card) {
-stopCurrentSpeech();
-let textToSpeak = '';
-let isEnglishAnn = false;
-const annId = card.dataset.annId;
-if (annId === 'custom') {
-const customInput = document.getElementById('customTextInput');
-textToSpeak = customInput.value.trim();
-if (!textToSpeak) {
-alert('방송할 문장을 먼저 입력해 주세요.');
-return;
-}
-const customBox = document.getElementById('customScriptBox');
-customBox.style.display = 'block';
-customBox.innerHTML = textToSpeak.split(' ').map((w, i) => ⁠<span class="word-token" data-word-idx="${i}">${w}</span>⁠).join(' ');
-} else {
-renderCard(card);
-const scriptBox = card.querySelector('.script-box');
-textToSpeak = scriptBox.textContent;
-if (annId === '13') isEnglishAnn = true;
-}
-if (!('speechSynthesis' in window)) {
-alert('이 기기/브라우저는 음성 합성을 지원하지 않습니다.');
-return;
-}
-const utterance = new SpeechSynthesisUtterance(textToSpeak);
-utterance.rate = state.speed;
-utterance.pitch = state.pitch;
-// 음성 엔진 선택
-const selectedVoiceName = isEnglishAnn ? state.voiceEn : state.voiceKo;
-if (selectedVoiceName && availableVoices.length) {
-const found = availableVoices.find(v => v.name === selectedVoiceName);
-if (found) utterance.voice = found;
-}
-state.activeCard = card;
-state.isPlaying = true;
-card.classList.add('playing');
-const progressBar = card.querySelector('.progress-bar-fill');
-const words = card.querySelectorAll('.word-token');
-const totalChars = textToSpeak.length;
-// 실시간 단어 하이라이트 (onboundary 이벤트)
-utterance.onboundary = (e) => {
-if (e.name === 'word') {
-const charIndex = e.charIndex;
-// 진행 바 업데이트
-if (progressBar && totalChars > 0) {
-const pct = Math.min(100, Math.round((charIndex / totalChars) * 100));
-progressBar.style.width = ⁠${pct}%⁠;
-}
-// 글자 수 기반으로 현재 단어 스팬 추적 및 하이라이트
-let accumulated = 0;
-words.forEach(w => {
-const wLen = w.textContent.length + 1;
-if (charIndex >= accumulated && charIndex < accumulated + wLen) {
-words.forEach(el => el.classList.remove('highlight'));
-w.classList.add('highlight');
-}
-accumulated += wLen;
-});
-}
-};
-// onboundary 미지원 기기 대비 Fallback 진행 바 타이머
-const estimatedSeconds = Math.max(3, (textToSpeak.length / 5) / state.speed);
-let elapsed = 0;
-state.progressTimer = setInterval(() => {
-elapsed += 0.15;
-const fallbackPct = Math.min(95, Math.round((elapsed / estimatedSeconds) * 100));
-if (progressBar && parseFloat(progressBar.style.width || '0') < fallbackPct) {
-progressBar.style.width = ⁠${fallbackPct}%⁠;
-}
-}, 150);
-utterance.onend = () => {
-if (progressBar) progressBar.style.width = '100%';
-setTimeout(() => stopCurrentSpeech(), 250);
-};
-utterance.onerror = () => {
-stopCurrentSpeech();
-};
-window.speechSynthesis.speak(utterance);
-}
-// 재생 및 정지 버튼 바인딩
-document.querySelectorAll('.btn-play').forEach(btn => {
-btn.addEventListener('click', (e) => {
-e.stopPropagation();
-const card = btn.closest('.ann-card');
-playCard(card);
-});
-});
-document.querySelectorAll('.btn-stop').forEach(btn => {
-btn.addEventListener('click', (e) => {
-e.stopPropagation();
-stopCurrentSpeech();
-});
-});
-/* 9. 핀치 줌 / 더블 탭 확대 완전 방지 스크립트 */
+// 11. 화면 줌인 / 줌아웃 방지
 document.addEventListener('gesturestart', (e) => e.preventDefault());
 document.addEventListener('gesturechange', (e) => e.preventDefault());
-let lastTouchEnd = 0;
+document.addEventListener('gestureend', (e) => e.preventDefault());
+let lastTouchTime = 0;
 document.addEventListener('touchend', (e) => {
 const now = Date.now();
-if (now - lastTouchEnd <= 300) {
+if (now - lastTouchTime <= 300) {
 e.preventDefault();
 }
-lastTouchEnd = now;
+lastTouchTime = now;
 }, false);
+// 초기 실행
+updateAllCards();
+})();
 </script>
 </body>
 </html>
