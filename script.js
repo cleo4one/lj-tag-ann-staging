@@ -6,9 +6,13 @@ const destNames = { ICN: '인천', PUS: '부산' };
 let synth = window.speechSynthesis;
 let voices = [];
 
-// Track Playback State
+// Playback State Tracking
 let activeCard = null;
 let isPaused = false;
+let currentSegments = [];
+let currentSegmentIdx = 0;
+let currentSpans = [];
+let currentProgressFill = null;
 
 // DOM Elements
 const startOverlay = document.getElementById('startOverlay');
@@ -20,21 +24,21 @@ const rngPitch = document.getElementById('rngPitch');
 const lblSpeed = document.getElementById('lblSpeed');
 const lblPitch = document.getElementById('lblPitch');
 
-// Gesture Prevention
+// 1. Zoom and Gesture Prevention
 document.addEventListener('gesturestart', (e) => e.preventDefault());
 document.addEventListener('gesturechange', (e) => e.preventDefault());
 
-// Start Overlay Click
+// 2. Start Overlay Event Handler
 btnStart.addEventListener('click', () => {
     initVoices();
     startOverlay.style.display = 'none';
 });
 
-// Slider Updates
+// 3. Slider UI Indicators
 rngSpeed.addEventListener('input', (e) => lblSpeed.textContent = e.target.value);
 rngPitch.addEventListener('input', (e) => lblPitch.textContent = e.target.value);
 
-// Voice Init
+// 4. Voice Initialization Logic
 function initVoices() {
     voices = synth.getVoices();
     selVoiceKo.innerHTML = '';
@@ -56,7 +60,7 @@ if (speechSynthesis.onvoiceschanged !== undefined) {
     speechSynthesis.onvoiceschanged = initVoices;
 }
 
-// Language Segment Parser (Korean vs English Voice Separation)
+// 5. Parse Text to Korean / English Segments for Dual-Voice Engine
 function parseTextToSegments(text) {
     const segments = [];
     const regex = /([A-Za-z0-9\s.,!?-]+)|([^A-Za-z0-9\s.,!?-]+)/g;
@@ -72,7 +76,34 @@ function parseTextToSegments(text) {
     return segments;
 }
 
-// Repeat Buttons Logic
+// 6. Flight & Destination Buttons Event Listeners
+document.querySelectorAll('.btn-flight').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.btn-flight').forEach(b => {
+            b.classList.remove('bg-lj-lime', 'text-slate-950');
+            b.classList.add('text-slate-400');
+        });
+        e.target.classList.add('bg-lj-lime', 'text-slate-950');
+        e.target.classList.remove('text-slate-400');
+        currentFlight = e.target.getAttribute('data-val');
+        updateAllTemplates();
+    });
+});
+
+document.querySelectorAll('.btn-dest').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.btn-dest').forEach(b => {
+            b.classList.remove('bg-lj-lime', 'text-slate-950');
+            b.classList.add('text-slate-400');
+        });
+        e.target.classList.add('bg-lj-lime', 'text-slate-950');
+        e.target.classList.remove('text-slate-400');
+        currentDest = e.target.getAttribute('data-val');
+        updateAllTemplates();
+    });
+});
+
+// 7. Repetition Counter (+/- Buttons) Event Listeners
 document.addEventListener('click', (e) => {
     if (e.target.classList.contains('btn-repeat-plus')) {
         const span = e.target.previousElementSibling;
@@ -87,7 +118,7 @@ document.addEventListener('click', (e) => {
     }
 });
 
-// MyMemory Translation API Call
+// 8. MyMemory API Translation Event Listener
 document.addEventListener('click', async (e) => {
     if (e.target.classList.contains('btn-translate')) {
         const card = e.target.closest('.ann-card');
@@ -111,7 +142,7 @@ document.addEventListener('click', async (e) => {
     }
 });
 
-// Template Updates with Repetition
+// 9. Template Placeholders Updater
 function updateAllTemplates() {
     document.querySelectorAll('.ann-card').forEach(card => {
         const textElem = card.querySelector('.ann-text');
@@ -129,7 +160,12 @@ function updateAllTemplates() {
         const nameInput = card.querySelector('.input-names');
         let namesVal = nameInput && nameInput.value.trim() !== '' ? nameInput.value.trim() : '';
 
-        // Repeat Logic
+        const delayHInput = card.querySelector('.input-delay-h');
+        const delayMInput = card.querySelector('.input-delay-m');
+        let delayHVal = delayHInput ? delayHInput.value : '0';
+        let delayMVal = delayMInput ? delayMInput.value : '0';
+
+        // Repeat Logic Processing
         const repeatSpan = card.querySelector('.repeat-val');
         const repeatCount = repeatSpan ? parseInt(repeatSpan.textContent) || 1 : 1;
 
@@ -145,31 +181,43 @@ function updateAllTemplates() {
             .replace(/{destination}/g, destSpoken)
             .replace(/{flightNumber}/g, flightSpoken)
             .replace(/{gate}/g, gateVal)
-            .replace(/{names}/g, namesVal);
+            .replace(/{names}/g, namesVal)
+            .replace(/{delayH}/g, delayHVal)
+            .replace(/{delayM}/g, delayMVal);
 
         textElem.textContent = result;
     });
 }
 
-// Accordion Toggle
+// 10. Watching Input Changes
+document.addEventListener('input', (e) => {
+    if (e.target.classList.contains('input-gate') ||
+        e.target.classList.contains('input-names') ||
+        e.target.classList.contains('input-delay-h') ||
+        e.target.classList.contains('input-delay-m')) {
+        updateAllTemplates();
+    }
+});
+
+// 11. Accordion Toggle Logic
 document.querySelectorAll('.card-header').forEach(header => {
     header.addEventListener('click', () => {
         const body = header.nextElementSibling;
         const isHidden = body.classList.contains('hidden');
         
-        // Stop current speech when toggling accordion
         stopSpeech();
         document.querySelectorAll('.card-body').forEach(b => b.classList.add('hidden'));
         if (isHidden) body.classList.remove('hidden');
     });
 });
 
-// Play / Pause / Resume Logic
+// 12. Play / Pause / Resume Speech Logic
 document.querySelectorAll('.btn-play').forEach(btn => {
     btn.addEventListener('click', (e) => {
         const card = e.target.closest('.ann-card');
+        const isEnglishOnly = e.target.getAttribute('data-lang') === 'en';
 
-        // 1. Same Card Clicked while Speaking -> Toggle Pause / Resume
+        // Case A: Toggle Pause & Resume on the same card
         if (activeCard === card) {
             if (synth.speaking && !synth.paused) {
                 synth.pause();
@@ -184,79 +232,109 @@ document.querySelectorAll('.btn-play').forEach(btn => {
             }
         }
 
-        // 2. Different Card or New Play -> Stop and Start Fresh
+        // Case B: Start New Speech
         stopSpeech();
         activeCard = card;
         e.target.textContent = '❚❚ 일시정지 (Pause)';
 
         const textElem = card.querySelector('.ann-text');
-        const progressFill = card.querySelector('.progress-bar-fill');
+        currentProgressFill = card.querySelector('.progress-bar-fill');
         const text = textElem.textContent.trim();
 
+        // Wrap words for highlighting
         const words = text.split(' ');
         textElem.innerHTML = words.map(w => `<span>${w}</span>`).join(' ');
-        const spans = textElem.querySelectorAll('span');
+        currentSpans = textElem.querySelectorAll('span');
 
-        const segments = parseTextToSegments(text);
-        let currentSegmentIdx = 0;
+        currentSegments = isEnglishOnly ? [{ text: text, lang: 'en' }] : parseTextToSegments(text);
+        currentSegmentIdx = 0;
 
-        function speakNextSegment() {
-            if (currentSegmentIdx >= segments.length) {
-                resetCardUI(card);
-                stopSpeech();
-                return;
-            }
-
-            const seg = segments[currentSegmentIdx];
-            const utterance = new SpeechSynthesisUtterance(seg.text);
-            utterance.rate = parseFloat(rngSpeed.value);
-            utterance.pitch = parseFloat(rngPitch.value);
-
-            if (voices.length > 0) {
-                if (seg.lang === 'en' && selVoiceEn.value) {
-                    utterance.voice = voices[selVoiceEn.value];
-                } else if (selVoiceKo.value) {
-                    utterance.voice = voices[selVoiceKo.value];
-                }
-            }
-
-            utterance.onboundary = (event) => {
-                if (event.name === 'word') {
-                    const charIdx = event.charIndex;
-                    let currentLen = 0;
-
-                    spans.forEach((span, idx) => {
-                        const spanLen = span.textContent.length;
-                        if (charIdx >= currentLen && charIdx < currentLen + spanLen + 1) {
-                            span.className = 'hl-word';
-                            const pct = Math.min(100, Math.round(((idx + 1) / spans.length) * 100));
-                            if (progressFill) progressFill.style.width = pct + '%';
-                        } else {
-                            span.className = '';
-                        }
-                        currentLen += spanLen + 1;
-                    });
-                }
-            };
-
-            utterance.onend = () => {
-                currentSegmentIdx++;
-                speakNextSegment();
-            };
-
-            utterance.onerror = () => {
-                resetCardUI(card);
-                stopSpeech();
-            };
-
-            synth.speak(utterance);
-        }
-
-        speakNextSegment();
+        speakSegment();
     });
 });
 
-// Stop Button Logic
+// Custom Speech Play Button
+const btnCustomPlay = document.querySelector('.btn-play-custom');
+if (btnCustomPlay) {
+    btnCustomPlay.addEventListener('click', (e) => {
+        const card = e.target.closest('.ann-card');
+        const inputCustom = card.querySelector('.input-custom');
+        const text = inputCustom.value.trim();
+        if (!text) return;
+
+        stopSpeech();
+        activeCard = card;
+
+        const textElem = card.querySelector('.ann-text');
+        textElem.classList.remove('hidden');
+        currentProgressFill = card.querySelector('.progress-bar-fill');
+
+        const words = text.split(' ');
+        textElem.innerHTML = words.map(w => `<span>${w}</span>`).join(' ');
+        currentSpans = textElem.querySelectorAll('span');
+
+        currentSegments = parseTextToSegments(text);
+        currentSegmentIdx = 0;
+
+        speakSegment();
+    });
+}
+
+// Speak Segment Queue
+function speakSegment() {
+    if (currentSegmentIdx >= currentSegments.length) {
+        resetCardUI(activeCard);
+        stopSpeech();
+        return;
+    }
+
+    const seg = currentSegments[currentSegmentIdx];
+    const utterance = new SpeechSynthesisUtterance(seg.text);
+    utterance.rate = parseFloat(rngSpeed.value);
+    utterance.pitch = parseFloat(rngPitch.value);
+
+    if (voices.length > 0) {
+        if (seg.lang === 'en' && selVoiceEn.value) {
+            utterance.voice = voices[selVoiceEn.value];
+        } else if (selVoiceKo.value) {
+            utterance.voice = voices[selVoiceKo.value];
+        }
+    }
+
+    // Word Highlighting and Progress Bar
+    utterance.onboundary = (event) => {
+        if (event.name === 'word') {
+            const charIdx = event.charIndex;
+            let currentLen = 0;
+
+            currentSpans.forEach((span, idx) => {
+                const spanLen = span.textContent.length;
+                if (charIdx >= currentLen && charIdx < currentLen + spanLen + 1) {
+                    span.className = 'hl-word';
+                    const pct = Math.min(100, Math.round(((idx + 1) / currentSpans.length) * 100));
+                    if (currentProgressFill) currentProgressFill.style.width = pct + '%';
+                } else {
+                    span.className = '';
+                }
+                currentLen += spanLen + 1;
+            });
+        }
+    };
+
+    utterance.onend = () => {
+        currentSegmentIdx++;
+        speakSegment();
+    };
+
+    utterance.onerror = () => {
+        resetCardUI(activeCard);
+        stopSpeech();
+    };
+
+    synth.speak(utterance);
+}
+
+// 13. Stop Playback Logic
 document.querySelectorAll('.btn-stop').forEach(btn => {
     btn.addEventListener('click', () => {
         stopSpeech();
@@ -272,6 +350,8 @@ function stopSpeech() {
         activeCard = null;
     }
     isPaused = false;
+    currentSegments = [];
+    currentSegmentIdx = 0;
 }
 
 function resetCardUI(card) {
@@ -282,8 +362,10 @@ function resetCardUI(card) {
 
     if (btnPlay) btnPlay.textContent = '▶ 재생 / 일시정지';
     if (progressFill) progressFill.style.width = '0%';
-    if (textElem) textElem.querySelectorAll('span').forEach(s => s.className = '');
+    if (textElem) {
+        textElem.querySelectorAll('span').forEach(s => s.className = '');
+    }
 }
 
-// Initial Setup
+// Initial Call
 updateAllTemplates();
