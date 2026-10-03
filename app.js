@@ -213,6 +213,17 @@
     return el;
   }
 
+  function syncDestinationInputs() {
+    document.querySelectorAll('[data-input-type="destination"]').forEach(control => {
+      control.dataset.value = state.currentDest;
+      control.querySelectorAll('button[data-choice-value]').forEach(button => {
+        const active = button.dataset.choiceValue === state.currentDest;
+        button.classList.toggle('is-active', active);
+        button.setAttribute('aria-pressed', String(active));
+      });
+    });
+  }
+
   function renderQuickControls() {
     els.flightButtons.replaceChildren();
     DATA.flights.forEach(flight => {
@@ -247,6 +258,7 @@
       });
       els.destinationButtons.appendChild(btn);
     });
+    syncDestinationInputs();
   }
 
   function renderInput(card, ann, spec) {
@@ -281,6 +293,56 @@
       controls.append(minus, value, plus);
       box.append(label, controls);
       group.appendChild(box);
+      return group;
+    }
+
+    if (spec.type === 'choice' || spec.type === 'destination') {
+      const labelRow = createEl('div', 'input-label-row');
+      labelRow.appendChild(createEl('span', 'input-label', spec.label));
+      const control = createEl('div', 'choice-control');
+      control.dataset.inputKey = spec.key;
+      control.dataset.inputType = spec.type;
+
+      const options = spec.type === 'destination'
+        ? Object.entries(DATA.destinations).map(([value, dest]) => ({ value, label: dest.label, ko: dest.ko, en: dest.en }))
+        : (spec.options || []).map(option => typeof option === 'string' ? { value: option, label: option } : option);
+      const defaultValue = spec.type === 'destination'
+        ? state.currentDest
+        : String(spec.default ?? options[0]?.value ?? '');
+      control.dataset.value = defaultValue;
+
+      const setChoice = value => {
+        control.dataset.value = value;
+        control.querySelectorAll('button[data-choice-value]').forEach(button => {
+          const active = button.dataset.choiceValue === value;
+          button.classList.toggle('is-active', active);
+          button.setAttribute('aria-pressed', String(active));
+        });
+
+        if (spec.type === 'destination') {
+          if (state.currentDest !== value) {
+            stopSpeech();
+            state.currentDest = value;
+            storageSet(STORAGE.destination, value);
+            renderQuickControls();
+          }
+          refreshAllPreviews();
+        } else {
+          updateCardPreview(card, ann);
+        }
+      };
+
+      options.forEach(optionSpec => {
+        const value = String(optionSpec.value);
+        const button = createEl('button', value === defaultValue ? 'is-active' : '', optionSpec.label ?? value);
+        button.type = 'button';
+        button.dataset.choiceValue = value;
+        button.setAttribute('aria-pressed', String(value === defaultValue));
+        button.addEventListener('click', () => setChoice(value));
+        control.appendChild(button);
+      });
+
+      group.append(labelRow, control);
       return group;
     }
 
@@ -342,8 +404,11 @@
     specs.forEach(spec => {
       const el = card.querySelector(`[data-input-key="${spec.key}"]`);
       let value = '';
-      if (spec.type === 'repeat') value = el?.dataset.value || String(spec.default ?? 1);
-      else value = el?.value?.trim() || '';
+      if (spec.type === 'repeat' || spec.type === 'choice' || spec.type === 'destination') {
+        value = el?.dataset.value || String(spec.default ?? '');
+      } else {
+        value = el?.value?.trim() || '';
+      }
 
       if ((spec.type === 'number') && value) value = normalizeNumber(value);
       if (spec.type === 'textarea' && value) value = value.replace(/\s+/g, ' ').trim();
@@ -357,6 +422,23 @@
         else value = `[${spec.label}]`;
       }
       context[spec.key] = value;
+
+      if (spec.type === 'destination' && value) {
+        const dest = DATA.destinations[value];
+        if (dest) {
+          context[`${spec.key}Ko`] = dest.ko;
+          context[`${spec.key}En`] = dest.en;
+          context[`${spec.key}Label`] = dest.label;
+        }
+      } else if (spec.type === 'choice' && value) {
+        const option = (spec.options || []).map(item => typeof item === 'string' ? { value: item, label: item } : item)
+          .find(item => String(item.value) === String(value));
+        if (option) {
+          context[`${spec.key}Ko`] = option.ko ?? option.value;
+          context[`${spec.key}En`] = option.en ?? option.value;
+          context[`${spec.key}Label`] = option.label ?? option.value;
+        }
+      }
     });
 
     (ann.derived || []).forEach(rule => {

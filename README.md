@@ -2,6 +2,8 @@
 
 Static mobile-first airport announcement player for the JINAIR TAG branch.
 
+Current build: **20261004.4** with 16 standard announcements plus Custom Announcement.
+
 ## Files
 
 - `index.html` — application shell and English UI
@@ -26,3 +28,16 @@ The app can only select voices that Safari/WebKit exposes through `speechSynthes
 ## External dependency
 
 Core UI and local device TTS do not require Tailwind, Google Fonts, or GitHub assets. The optional passenger-name translation feature uses the MyMemory web API and therefore requires internet access.
+
+
+## Announcement 16 — Passenger Paging (General)
+
+Announcement 16 supports:
+
+- Destination buttons: ICN / PUS (synchronized with the top destination control)
+- Passenger name input with optional Convert Name to Korean
+- Independent name repeat count, default 2
+- Location buttons: CNTR / GATE / CNTR or GATE
+- Spoken Korean location mapping: 카운터 / 탑승구 / 카운터나 탑승구
+- Default location: GATE
+- Dynamic English reference

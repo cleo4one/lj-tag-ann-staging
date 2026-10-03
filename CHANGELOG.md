@@ -1,3 +1,13 @@
+# 20261004.4
+
+- Added Announcement 16: **Passenger Paging (General)**.
+- Added per-announcement ICN/PUS destination buttons synchronized with the top destination selector.
+- Added passenger-name input, MyMemory name conversion, and independent name repeat control (default: 2).
+- Added location buttons: **CNTR**, **GATE**, and **CNTR or GATE**; spoken Korean values are **카운터**, **탑승구**, and **카운터나 탑승구**. Default location is **GATE**.
+- Added a dynamic English reference for Announcement 16.
+- Added reusable data-driven `destination` and `choice` input types for future announcements.
+- Existing Announcements 1–15 remain unchanged.
+
 # Changelog
 
 ## 20261004.3

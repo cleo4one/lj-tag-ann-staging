@@ -442,3 +442,33 @@ h2 { margin: 0; font-size: 1.05rem; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
 }
+
+/* Announcement-specific segmented choices (e.g. destination/location). */
+.choice-control {
+  display: flex;
+  width: 100%;
+  gap: .22rem;
+  padding: .22rem;
+  border: 1px solid #34435a;
+  border-radius: .78rem;
+  background: #111b2c;
+}
+.choice-control button {
+  flex: 1 1 0;
+  min-height: 2.25rem;
+  border: 0;
+  border-radius: .58rem;
+  padding: .4rem .45rem;
+  background: transparent;
+  color: #aebdce;
+  font-size: .7rem;
+  font-weight: 850;
+  line-height: 1.15;
+  cursor: pointer;
+}
+.choice-control button.is-active {
+  background: var(--lime);
+  color: #101827;
+}
+
+.ann-card[data-tone="paging"] { --ann-accent: #2dd4bf; --ann-soft: rgba(45,212,191,.10); --ann-soft-strong: rgba(45,212,191,.16); }

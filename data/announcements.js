@@ -5,7 +5,7 @@
  * UI labels are English; announcement templates preserve their operational language.
  */
 window.LJ_ANNOUNCEMENT_DATA = {
-  "appVersion": "20261004.3",
+  "appVersion": "20261004.4",
   "branch": "TAG Branch",
   "flights": [
     "LJ044",
@@ -476,6 +476,75 @@ window.LJ_ANNOUNCEMENT_DATA = {
         }
       ],
       "englishTemplate": "Once again, we sincerely apologize for the delay in boarding Jin Air flight {flightNumber} to {destination}.\nDue to the delayed arrival of the inbound aircraft, cabin cleaning and preparations are currently underway.\nThe estimated boarding time is around {hour}:{minute}.\nPassengers on Jin Air flight {flightNumber}, please remain seated near the gate area and refrain from lining up until the next boarding announcement is made.\nThank you for your understanding and patience."
+    },
+    {
+      "id": "16",
+      "icon": "📢",
+      "tone": "paging",
+      "title": "Passenger Paging (General)",
+      "summary": "General passenger paging",
+      "language": "auto",
+      "template": "진에어에서 승객을 찾습니다. 진에어 {pagingDestinationKo}행에 탑승하시는 {namesRepeated} 승객께서는 진에어 {locationKo}로 오시어 직원의 안내를 받아주시기 바랍니다. 감사합니다.",
+      "inputs": [
+        {
+          "type": "destination",
+          "key": "pagingDestination",
+          "label": "Destination",
+          "required": true
+        },
+        {
+          "type": "choice",
+          "key": "location",
+          "label": "Location",
+          "required": true,
+          "default": "GATE",
+          "options": [
+            {
+              "value": "CNTR",
+              "label": "CNTR",
+              "ko": "카운터",
+              "en": "counter"
+            },
+            {
+              "value": "GATE",
+              "label": "GATE",
+              "ko": "탑승구",
+              "en": "boarding gate"
+            },
+            {
+              "value": "CNTR_OR_GATE",
+              "label": "CNTR or GATE",
+              "ko": "카운터나 탑승구",
+              "en": "counter or boarding gate"
+            }
+          ]
+        },
+        {
+          "type": "textarea",
+          "key": "names",
+          "label": "Passenger name(s)",
+          "placeholder": "e.g. KIM CHULSOO, LEE YOUNGHEE",
+          "required": true,
+          "translate": true
+        },
+        {
+          "type": "repeat",
+          "key": "nameRepeat",
+          "label": "Name repeats",
+          "default": 2,
+          "min": 1,
+          "max": 9
+        }
+      ],
+      "derived": [
+        {
+          "key": "namesRepeated",
+          "template": "{names}",
+          "repeatKey": "nameRepeat",
+          "separator": ", "
+        }
+      ],
+      "englishTemplate": "Jin Air is paging a passenger. Passenger {namesRepeated}, traveling on Jin Air to {pagingDestinationEn}, please proceed to the Jin Air {locationEn} and contact a staff member for assistance. Thank you."
     }
   ]
 };
