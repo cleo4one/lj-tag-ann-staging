@@ -1,3 +1,9 @@
+# 20261004.9
+
+- Increased the effective passenger-name textarea height for Announcements 2, 3, 9, and 16.
+- Name textareas now stretch to match the full height of the adjacent `Repeats` + `A→가` controls, keeping the lower edges aligned.
+- No announcement text or TTS logic changed.
+
 # 20261004.8
 
 - Added a compact Custom Announcement `✕ Clear` action with one-step `↶ Undo`.

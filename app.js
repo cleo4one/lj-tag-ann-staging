@@ -633,7 +633,10 @@
           repeatLabel.textContent = 'Repeats';
           repeatLabel.title = cluster.repeatSpec.label;
         }
-        if (translateAction) repeat.appendChild(translateAction);
+        if (translateAction) {
+          repeat.appendChild(translateAction);
+          row.classList.add('has-translate-action');
+        }
         row.appendChild(repeat);
         inputArea.appendChild(row);
         return;

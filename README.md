@@ -1,8 +1,8 @@
-# JIN AIR TAG Announcement Player — 20261004.8
+# JIN AIR TAG Announcement Player — 20261004.9
 
 Static mobile-first airport announcement player for the JIN AIR TAG branch.
 
-Current build: **20261004.8** with 16 standard announcements plus Custom Announcement.
+Current build: **20261004.9** with 16 standard announcements plus Custom Announcement.
 
 ## Files
 
@@ -72,9 +72,14 @@ Announcement 16 supports:
 
 
 
-## 20261004.8 compact input refinements
+## 20261004.9 compact input refinements
 
 - Custom Announcement now has a one-tap `✕ Clear` action with a one-step `↶ Undo` recovery.
 - Name conversion is displayed as compact `A→가` and placed under the associated repeat control.
 - Announcement 10 uses the shorter `New gate` label.
 - Announcements 14 and 15 render Hour/Minute as one `Est. boarding time` control with an `HH : MM` visual layout.
+
+## 20261004.9 passenger-name row alignment
+
+- Passenger-name textareas in Announcements 2, 3, 9, and 16 now stretch vertically to align with the adjacent `Repeats` + `A→가` stack.
+- No announcement wording, input semantics, repetition rules, or TTS behavior changed.
