@@ -1,3 +1,11 @@
+## 20261004.13
+- Reworked iOS Home Screen pull-to-refresh after the previous gesture failed on real-device testing.
+- Custom pull-to-refresh now targets iOS standalone mode specifically via `navigator.standalone`.
+- Removed the previous TTS-unlocked requirement and interactive-control exclusion, so a pull can start anywhere at the top of the page, including before pressing Start.
+- Gesture tracking now binds to `window`, uses touch `screenY`, and also detects iOS standalone rubber-band overscroll via negative `window.scrollY`.
+- Refresh detection no longer depends on `preventDefault()` succeeding; both direct touch distance and native overscroll distance can arm the refresh.
+- Existing announcement scripts and TTS behavior are unchanged.
+
 ## 20261004.12
 - Added a custom pull-to-refresh gesture for installed/standalone Home Screen web-app mode.
 - Safari browser tabs continue using Safari's native pull-to-refresh; the custom gesture activates only in standalone mode.

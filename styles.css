@@ -230,12 +230,12 @@ button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-
   font-weight: 800;
   opacity: 0;
   pointer-events: none;
-  transform: translate(-50%, -.55rem) scale(.97);
+  transform: translate(-50%, calc(-.55rem + var(--pull-offset, 0px))) scale(.97);
   transition: opacity .12s ease, transform .12s ease, border-color .12s ease;
 }
 .pull-refresh-indicator.is-visible {
   opacity: 1;
-  transform: translate(-50%, 0) scale(1);
+  transform: translate(-50%, var(--pull-offset, 0px)) scale(1);
 }
 .pull-refresh-indicator.is-armed {
   border-color: rgba(180, 219, 43, .78);

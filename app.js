@@ -1338,33 +1338,38 @@
     state.currentDest = Object.prototype.hasOwnProperty.call(DATA.destinations, savedDest) ? savedDest : Object.keys(DATA.destinations)[0];
   }
 
-  function isStandaloneMode() {
-    return window.matchMedia?.('(display-mode: standalone)').matches === true
-      || window.navigator.standalone === true;
+  function isIOSStandaloneMode() {
+    // navigator.standalone is an iOS/iPadOS Safari Home Screen property.
+    // Keep the custom gesture iOS-only so normal Safari and Android can use
+    // their native browser refresh behavior.
+    return window.navigator.standalone === true;
   }
 
   function initStandalonePullToRefresh() {
-    if (!isStandaloneMode() || !els.pullRefreshIndicator) return;
+    if (!isIOSStandaloneMode() || !els.pullRefreshIndicator) return;
 
     document.documentElement.classList.add('standalone-mode');
 
-    const threshold = 88;
-    const maximumPull = 132;
+    const triggerDistance = 92;
+    const indicatorStartDistance = 12;
+    const maximumVisualPull = 74;
+
     let tracking = false;
-    let startY = 0;
-    let pullDistance = 0;
+    let startY = null;
+    let latestTouchY = null;
+    let rawPullDistance = 0;
+    let visualPullDistance = 0;
     let armed = false;
     let refreshing = false;
 
-    const scrollTop = () => Math.max(
-      document.scrollingElement?.scrollTop || 0,
-      window.scrollY || 0
-    );
+    const pageIsAtTop = () => {
+      // iOS standalone PWAs can report a negative scrollY while rubber-banding.
+      // Treat every value <= 1 as the top rather than clamping it away.
+      const docTop = document.scrollingElement?.scrollTop ?? 0;
+      return docTop <= 1 && (window.scrollY || 0) <= 1;
+    };
 
-    const startedOnInteractiveControl = target => Boolean(
-      target instanceof Element
-      && target.closest('input, textarea, select, button, label, summary, a, [role="button"]')
-    );
+    const nativeOverscrollDistance = () => Math.max(0, -(window.scrollY || 0));
 
     const positionIndicator = () => {
       const header = document.querySelector('.app-header');
@@ -1373,80 +1378,133 @@
     };
 
     const renderPullState = () => {
-      const visible = pullDistance > 8 || refreshing;
+      const visible = rawPullDistance >= indicatorStartDistance || refreshing;
       els.pullRefreshIndicator.classList.toggle('is-visible', visible);
       els.pullRefreshIndicator.classList.toggle('is-armed', armed && !refreshing);
       els.pullRefreshIndicator.classList.toggle('is-refreshing', refreshing);
       els.pullRefreshIndicator.setAttribute('aria-hidden', visible ? 'false' : 'true');
 
+      // A small translation gives direct visual feedback even when iOS itself
+      // does not visibly rubber-band the standalone page.
+      const offset = refreshing ? 0 : Math.min(14, visualPullDistance * 0.18);
+      els.pullRefreshIndicator.style.setProperty('--pull-offset', `${offset}px`);
+
       if (refreshing) {
         els.pullRefreshText.textContent = 'Refreshing…';
-        return;
+      } else {
+        els.pullRefreshText.textContent = armed ? 'Release to refresh' : 'Pull to refresh';
       }
-      els.pullRefreshText.textContent = armed ? 'Release to refresh' : 'Pull to refresh';
+    };
+
+    const updatePullDistance = touchY => {
+      latestTouchY = touchY;
+      const fingerDistance = startY == null ? 0 : Math.max(0, touchY - startY);
+      const overscrollDistance = nativeOverscrollDistance();
+      rawPullDistance = Math.max(fingerDistance, overscrollDistance);
+      visualPullDistance = Math.min(maximumVisualPull, rawPullDistance * 0.48);
+      armed = rawPullDistance >= triggerDistance;
+      renderPullState();
     };
 
     const resetPull = () => {
       tracking = false;
-      startY = 0;
-      pullDistance = 0;
+      startY = null;
+      latestTouchY = null;
+      rawPullDistance = 0;
+      visualPullDistance = 0;
       armed = false;
       if (!refreshing) renderPullState();
     };
 
-    document.addEventListener('touchstart', event => {
-      if (refreshing || !state.unlocked) return;
-      if (!els.modal.classList.contains('is-hidden')) return;
-      if (event.touches.length !== 1 || scrollTop() > 1) return;
-      if (startedOnInteractiveControl(event.target)) return;
+    const beginTracking = event => {
+      if (refreshing || event.touches.length !== 1) return;
+      if (!pageIsAtTop()) return;
 
       tracking = true;
-      startY = event.touches[0].clientY;
-      pullDistance = 0;
+      startY = event.touches[0].screenY;
+      latestTouchY = startY;
+      rawPullDistance = 0;
+      visualPullDistance = 0;
       armed = false;
       positionIndicator();
       renderPullState();
-    }, { passive: true });
+    };
 
-    document.addEventListener('touchmove', event => {
-      if (!tracking || refreshing || event.touches.length !== 1) return;
-      if (scrollTop() > 1) {
+    const moveTracking = event => {
+      if (refreshing || event.touches.length !== 1) return;
+
+      // iOS can begin the overscroll before our first useful touchstart reaches
+      // the page. If that happens, start tracking lazily during touchmove.
+      if (!tracking) {
+        if (!pageIsAtTop()) return;
+        tracking = true;
+        startY = event.touches[0].screenY;
+        latestTouchY = startY;
+        positionIndicator();
+      }
+
+      const touchY = event.touches[0].screenY;
+      const fingerDelta = startY == null ? 0 : touchY - startY;
+
+      if (fingerDelta < 0 && nativeOverscrollDistance() === 0) {
         resetPull();
         return;
       }
 
-      const deltaY = event.touches[0].clientY - startY;
-      if (deltaY <= 0) {
-        pullDistance = 0;
-        armed = false;
-        renderPullState();
-        return;
-      }
+      updatePullDistance(touchY);
 
-      // Standalone iOS web apps do not provide Safari's native pull-to-refresh.
-      // Apply resistance so the gesture feels deliberate and does not over-travel.
-      event.preventDefault();
-      pullDistance = Math.min(maximumPull, deltaY * 0.58);
-      armed = pullDistance >= threshold;
-      renderPullState();
-    }, { passive: false });
+      // We intentionally do not depend on preventDefault() for detection.
+      // When WebKit allows cancellation, preventing the default keeps the
+      // gesture controlled by our UI; when it does not, negative scrollY is
+      // still detected above as a fallback.
+      if (rawPullDistance > 0 && event.cancelable) event.preventDefault();
+    };
 
     const finishPull = () => {
       if (!tracking || refreshing) return;
-      const shouldRefresh = armed;
-      resetPull();
+      const shouldRefresh = armed || nativeOverscrollDistance() >= triggerDistance;
 
-      if (!shouldRefresh) return;
+      if (!shouldRefresh) {
+        resetPull();
+        return;
+      }
+
       refreshing = true;
       armed = false;
-      pullDistance = threshold;
+      rawPullDistance = triggerDistance;
+      visualPullDistance = Math.min(maximumVisualPull, triggerDistance * 0.48);
       renderPullState();
+
       try { stopSpeech(); } catch (_) { /* noop */ }
-      window.setTimeout(() => window.location.reload(), 140);
+
+      // replace() is avoided so that a normal reload semantics is preserved.
+      window.setTimeout(() => window.location.reload(), 120);
     };
 
-    document.addEventListener('touchend', finishPull, { passive: true });
-    document.addEventListener('touchcancel', resetPull, { passive: true });
+    const observeNativeOverscroll = () => {
+      if (refreshing) return;
+      const overscroll = nativeOverscrollDistance();
+      if (overscroll <= 0) return;
+
+      if (!tracking) {
+        tracking = true;
+        startY = latestTouchY;
+        positionIndicator();
+      }
+
+      rawPullDistance = Math.max(rawPullDistance, overscroll);
+      visualPullDistance = Math.min(maximumVisualPull, rawPullDistance * 0.48);
+      armed = rawPullDistance >= triggerDistance;
+      renderPullState();
+    };
+
+    // Bind to window rather than document. This mirrors established iOS PWA
+    // pull-to-refresh workarounds and avoids document-level event quirks.
+    window.addEventListener('touchstart', beginTracking, { passive: true });
+    window.addEventListener('touchmove', moveTracking, { passive: false });
+    window.addEventListener('touchend', finishPull, { passive: true });
+    window.addEventListener('touchcancel', resetPull, { passive: true });
+    window.addEventListener('scroll', observeNativeOverscroll, { passive: true });
     window.addEventListener('resize', positionIndicator, { passive: true });
     window.addEventListener('orientationchange', positionIndicator, { passive: true });
   }

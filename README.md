@@ -1,8 +1,8 @@
-# JIN AIR TAG Announcement Player — 20261004.12
+# JIN AIR TAG Announcement Player — 20261004.13
 
 Static mobile-first airport announcement player for the JIN AIR TAG branch.
 
-Current build: **20261004.12** with 16 standard announcements plus Custom Announcement.
+Current build: **20261004.13** with 16 standard announcements plus Custom Announcement.
 
 ## Files
 
@@ -19,7 +19,7 @@ Operational announcement scripts remain in `data/announcements.js`. The Korean/E
 
 ## Pull to Refresh in Home Screen App
 
-Safari provides its own pull-to-refresh gesture in a normal browser tab. When the site is launched as an installed/standalone Home Screen web app, the app enables its own pull-to-refresh gesture. From the top of the page, drag downward until `Release to refresh` appears, then release. The custom gesture is enabled only in standalone mode so it does not compete with Safari's native browser-tab gesture.
+Safari provides its own pull-to-refresh gesture in a normal browser tab. On iPhone/iPad Home Screen web apps, the app enables a custom pull-to-refresh gesture only when `navigator.standalone === true`. From the very top of the page, drag downward until `Release to refresh` appears, then release. The gesture can begin anywhere at the top of the page and does not require the TTS Start screen to have been dismissed. Detection uses both finger travel and iOS standalone rubber-band overscroll (`window.scrollY < 0`) so it does not depend on one WebKit overscroll behavior.
 
 ## Keep Screen Awake
 
