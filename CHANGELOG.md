@@ -1,3 +1,12 @@
+# 20261004.6
+
+- Compact codeshare label: `(KE5768)` instead of a separate `CS` line.
+- Removed card summary subtitles and voice helper text.
+- Simplified duplicate Standard Announcements / Custom Announcement headings.
+- Grouped linked input fields and repeat controls into compact rows.
+- Standardized visible/PWA branding to `JIN AIR`.
+- Restored project URL and creator credit in the footer.
+
 # 20261004.5
 
 - Moved the `Keep Awake` control into the top header next to the branch branding.

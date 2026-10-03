@@ -1,6 +1,6 @@
 {
-  "name": "JINAIR TAG Announcement Player",
-  "short_name": "JINAIR TAG Ann.",
+  "name": "JIN AIR TAG Announcement Player",
+  "short_name": "JIN AIR TAG Ann.",
   "description": "Jin Air TAG branch airport announcement TTS player",
   "start_url": "./",
   "scope": "./",

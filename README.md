@@ -1,8 +1,8 @@
-# JINAIR TAG Announcement Player — 20261004.3
+# JIN AIR TAG Announcement Player — 20261004.6
 
-Static mobile-first airport announcement player for the JINAIR TAG branch.
+Static mobile-first airport announcement player for the JIN AIR TAG branch.
 
-Current build: **20261004.5** with 16 standard announcements plus Custom Announcement.
+Current build: **20261004.6** with 16 standard announcements plus Custom Announcement.
 
 ## Files
 
@@ -48,7 +48,16 @@ Announcement 16 supports:
 - The top-left brand now reads `JIN AIR`.
 - `Keep Awake` has moved from Voice Engine Settings into the top header.
 - A compact `Codeshare` toggle sits next to the flight selector.
-- With Codeshare enabled, LJ044 shows `CS KE5768` beneath the primary flight number. LJ046 stays unchanged because no codeshare is configured for it.
+- With Codeshare enabled, LJ044 shows `(KE5768)` beneath the primary flight number. LJ046 stays unchanged because no codeshare is configured for it.
 - Korean templates that use `{flightNumber}` automatically expand LJ044 to `LJ044편, 공동운항 대한항공 KE5768편` in display text, while TTS receives pronunciation-optimized Korean.
 - English references render LJ044 as `LJ044 (Korean Air codeshare KE5768)` when the option is enabled.
 - The Codeshare preference is saved locally and remains enabled while switching flights; it only affects flights that have a configured codeshare mapping.
+
+
+## 20261004.6 UI density update
+
+- Codeshare sub-label is shown as `(KE5768)` without the `CS` prefix.
+- Removed secondary announcement summaries and inline voice helper text.
+- Removed duplicate Standard/Custom section headings.
+- Input controls and their repeat controls are grouped into compact rows using derived announcement rules.
+- Footer now uses the official `JIN AIR` spelling and includes the project URL and original creator credit.

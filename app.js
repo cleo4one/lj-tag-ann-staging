@@ -261,7 +261,7 @@
 
       btn.appendChild(createEl('span', 'flight-primary', flight));
       if (codeshare) {
-        btn.appendChild(createEl('span', 'flight-codeshare', `CS ${codeshare.flight}`));
+        btn.appendChild(createEl('span', 'flight-codeshare', `(${codeshare.flight})`));
         btn.setAttribute('aria-label', `${flight}, codeshare ${codeshare.carrierEn} ${codeshare.flight}`);
       } else {
         btn.setAttribute('aria-label', flight);
@@ -543,6 +543,64 @@
     window.requestAnimationFrame(() => window.requestAnimationFrame(align));
   }
 
+  function getRepeatInputClusters(ann) {
+    const specs = ann.inputs || [];
+    const byKey = new Map(specs.map(spec => [spec.key, spec]));
+    const claimed = new Set();
+    const clusters = [];
+
+    (ann.derived || []).forEach(rule => {
+      if (!rule.repeatKey || !rule.template) return;
+      const repeatSpec = byKey.get(rule.repeatKey);
+      if (!repeatSpec || repeatSpec.type !== 'repeat') return;
+
+      const keys = [...rule.template.matchAll(/\{([A-Za-z0-9_]+)\}/g)]
+        .map(match => match[1])
+        .filter((key, index, list) => list.indexOf(key) === index && byKey.has(key) && key !== rule.repeatKey);
+      const sourceSpecs = keys.map(key => byKey.get(key)).filter(Boolean);
+      if (!sourceSpecs.length) return;
+
+      const members = [...sourceSpecs, repeatSpec];
+      const indices = members.map(spec => specs.indexOf(spec)).filter(index => index >= 0);
+      if (!indices.length || members.some(spec => claimed.has(spec.key))) return;
+
+      members.forEach(spec => claimed.add(spec.key));
+      clusters.push({ start: Math.min(...indices), sourceSpecs, repeatSpec });
+    });
+
+    return { clusters, claimed };
+  }
+
+  function renderAnnouncementInputs(card, ann) {
+    const inputArea = createEl('div', 'input-area');
+    const specs = ann.inputs || [];
+    const { clusters, claimed } = getRepeatInputClusters(ann);
+    const clusterByStart = new Map(clusters.map(cluster => [cluster.start, cluster]));
+
+    specs.forEach((spec, index) => {
+      const cluster = clusterByStart.get(index);
+      if (cluster) {
+        const row = createEl('div', 'input-cluster');
+        row.dataset.sourceCount = String(cluster.sourceSpecs.length);
+        cluster.sourceSpecs.forEach(sourceSpec => {
+          const input = renderInput(card, ann, sourceSpec);
+          input.classList.add('cluster-primary');
+          row.appendChild(input);
+        });
+        const repeat = renderInput(card, ann, cluster.repeatSpec);
+        repeat.classList.add('cluster-repeat');
+        row.appendChild(repeat);
+        inputArea.appendChild(row);
+        return;
+      }
+
+      if (claimed.has(spec.key)) return;
+      inputArea.appendChild(renderInput(card, ann, spec));
+    });
+
+    return inputArea;
+  }
+
   function renderAnnouncementCard(ann) {
     const card = createEl('article', 'ann-card');
     card.dataset.annId = ann.id;
@@ -561,8 +619,7 @@
 
     const titleBlock = createEl('span', 'card-title-block');
     const title = createEl('h3', 'card-title', ann.title);
-    const summary = createEl('span', 'card-summary', ann.summary);
-    titleBlock.append(title, summary);
+    titleBlock.append(title);
 
     const chevron = createEl('span', 'card-chevron', '⌄');
     chevron.setAttribute('aria-hidden', 'true');
@@ -572,9 +629,7 @@
     body.hidden = true;
 
     if (ann.inputs?.length) {
-      const inputArea = createEl('div', 'input-area');
-      ann.inputs.forEach(spec => inputArea.appendChild(renderInput(card, ann, spec)));
-      body.appendChild(inputArea);
+      body.appendChild(renderAnnouncementInputs(card, ann));
     }
 
     const progress = createEl('div', 'progress-wrap');

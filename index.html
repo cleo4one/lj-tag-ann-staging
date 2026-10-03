@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#0f172a">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="JINAIR TAG Ann.">
-  <title>JINAIR TAG Airport Announcement Player</title>
+  <meta name="apple-mobile-web-app-title" content="JIN AIR TAG Ann.">
+  <title>JIN AIR TAG Airport Announcement Player</title>
   <link rel="icon" href="./icon.png">
   <link rel="apple-touch-icon" href="./icon.png">
   <link rel="manifest" href="./manifest.webmanifest">
@@ -19,7 +19,7 @@
   <div id="startOverlay" class="start-overlay" role="dialog" aria-modal="true" aria-labelledby="startTitle">
     <div class="start-card">
       <div class="start-icon" aria-hidden="true">🔊</div>
-      <h1 id="startTitle">JINAIR Announcement Player</h1>
+      <h1 id="startTitle">JIN AIR Announcement Player</h1>
       <p>TAG Branch Operations</p>
       <button id="btnStart" class="button button-primary button-large" type="button">▶ Start Announcement Player</button>
       <button id="btnStartFallback" class="button button-secondary is-hidden" type="button">Continue Without Voice List</button>
@@ -69,7 +69,6 @@
             <button id="btnPreviewKo" type="button" class="mini-button">Preview</button>
           </div>
           <select id="selVoiceKo" class="control"></select>
-          <p class="field-hint">Uses Korean TTS voices exposed by this browser. iPhone Safari may provide only a limited set.</p>
         </div>
 
         <div class="field-block">
@@ -78,7 +77,6 @@
             <button id="btnPreviewEn" type="button" class="mini-button">Preview</button>
           </div>
           <select id="selVoiceEn" class="control"></select>
-          <p class="field-hint">Used for English passenger names and English-only announcements.</p>
         </div>
       </div>
 
@@ -113,10 +111,7 @@
 
     <section aria-labelledby="catalogTitle">
       <div class="catalog-heading">
-        <div>
-          <p class="eyebrow">STANDARD ANNOUNCEMENTS</p>
-          <h2 id="catalogTitle">Standard Announcements</h2>
-        </div>
+        <h2 id="catalogTitle" class="eyebrow section-label">STANDARD ANNOUNCEMENTS</h2>
         <span id="catalogCount" class="catalog-count">16 announcements</span>
       </div>
       <div id="annCatalog" class="announcement-list"></div>
@@ -124,10 +119,7 @@
 
     <section aria-labelledby="customTitle">
       <div class="catalog-heading">
-        <div>
-          <p class="eyebrow">CUSTOM ANNOUNCEMENT</p>
-          <h2 id="customTitle">Custom Announcement</h2>
-        </div>
+        <h2 id="customTitle" class="eyebrow section-label">CUSTOM ANNOUNCEMENT</h2>
       </div>
       <div id="customAnnouncement"></div>
     </section>
@@ -149,8 +141,12 @@
     </details>
 
     <footer class="app-footer">
-      <span>JINAIR TAG Announcement Player</span>
-      <span id="versionLabel">Ver. —</span>
+      <div class="footer-topline">
+        <span>JIN AIR TAG Announcement Player</span>
+        <span id="versionLabel">Ver. —</span>
+      </div>
+      <a class="footer-link" href="https://cleo4one.github.io/lj-tag-ann" target="_blank" rel="noopener noreferrer">https://cleo4one.github.io/lj-tag-ann</a>
+      <span>Webpage creator: JeongHoon PARK(TAGKKKKZ)</span>
     </footer>
   </main>
 

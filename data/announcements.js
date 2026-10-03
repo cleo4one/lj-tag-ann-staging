@@ -5,7 +5,7 @@
  * UI labels are English; announcement templates preserve their operational language.
  */
 window.LJ_ANNOUNCEMENT_DATA = {
-  "appVersion": "20261004.5",
+  "appVersion": "20261004.6",
   "branch": "TAG Branch",
   "flights": [
     "LJ044",
