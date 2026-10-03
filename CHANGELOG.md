@@ -1,3 +1,11 @@
+# 20261004.7
+
+- Removed the duplicate `TTS SETTINGS` heading and kept a single `Voice Engine Settings` title.
+- Compressed Korean/English voice selectors and Speed/Pitch controls into one row each.
+- Unified Announcements 5–9 under the same boarding accent color.
+- Redesigned repeat controls with external labels aligned to normal input labels.
+- Reduced repeat-control width so linked passenger-name/gate/time inputs receive substantially more horizontal space.
+
 # 20261004.6
 
 - Compact codeshare label: `(KE5768)` instead of a separate `CS` line.

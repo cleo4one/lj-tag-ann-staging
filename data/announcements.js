@@ -5,7 +5,7 @@
  * UI labels are English; announcement templates preserve their operational language.
  */
 window.LJ_ANNOUNCEMENT_DATA = {
-  "appVersion": "20261004.6",
+  "appVersion": "20261004.7",
   "branch": "TAG Branch",
   "flights": [
     "LJ044",
@@ -126,7 +126,7 @@ window.LJ_ANNOUNCEMENT_DATA = {
     {
       "id": "5",
       "icon": "♿",
-      "tone": "assistance",
+      "tone": "boarding",
       "title": "Pre-BRDG (PAX who need assistance)",
       "summary": "Pre-boarding assistance",
       "language": "auto",
@@ -210,7 +210,7 @@ window.LJ_ANNOUNCEMENT_DATA = {
     {
       "id": "8",
       "icon": "⏰",
-      "tone": "final",
+      "tone": "boarding",
       "title": "Final Call for Boarding",
       "summary": "Final boarding call",
       "language": "auto",
@@ -247,7 +247,7 @@ window.LJ_ANNOUNCEMENT_DATA = {
     {
       "id": "9",
       "icon": "🗣️",
-      "tone": "final",
+      "tone": "boarding",
       "title": "Final Call for Boarding (With Name)",
       "summary": "Final boarding call with names",
       "language": "auto",

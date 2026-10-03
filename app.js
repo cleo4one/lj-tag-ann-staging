@@ -308,8 +308,9 @@
     if (spec.type === 'textarea') group.classList.add('is-wide');
 
     if (spec.type === 'repeat') {
+      const labelRow = createEl('div', 'input-label-row repeat-label-row');
+      labelRow.appendChild(createEl('span', 'input-label', spec.label));
       const box = createEl('div', 'repeat-box');
-      const label = createEl('span', 'repeat-label', spec.label);
       const controls = createEl('div', 'repeat-controls');
       const minus = createEl('button', 'repeat-button', '−');
       const value = createEl('span', 'repeat-value', String(spec.default ?? 1));
@@ -333,8 +334,8 @@
       minus.addEventListener('click', () => change(-1));
       plus.addEventListener('click', () => change(1));
       controls.append(minus, value, plus);
-      box.append(label, controls);
-      group.appendChild(box);
+      box.appendChild(controls);
+      group.append(labelRow, box);
       return group;
     }
 
@@ -589,6 +590,11 @@
         });
         const repeat = renderInput(card, ann, cluster.repeatSpec);
         repeat.classList.add('cluster-repeat');
+        const repeatLabel = repeat.querySelector('.input-label');
+        if (repeatLabel) {
+          repeatLabel.textContent = 'Repeats';
+          repeatLabel.title = cluster.repeatSpec.label;
+        }
         row.appendChild(repeat);
         inputArea.appendChild(row);
         return;

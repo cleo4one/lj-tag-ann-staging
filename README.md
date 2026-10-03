@@ -1,8 +1,8 @@
-# JIN AIR TAG Announcement Player — 20261004.6
+# JIN AIR TAG Announcement Player — 20261004.7
 
 Static mobile-first airport announcement player for the JIN AIR TAG branch.
 
-Current build: **20261004.6** with 16 standard announcements plus Custom Announcement.
+Current build: **20261004.7** with 16 standard announcements plus Custom Announcement.
 
 ## Files
 
@@ -61,3 +61,12 @@ Announcement 16 supports:
 - Removed duplicate Standard/Custom section headings.
 - Input controls and their repeat controls are grouped into compact rows using derived announcement rules.
 - Footer now uses the official `JIN AIR` spelling and includes the project URL and original creator credit.
+
+## 20261004.7 settings and form alignment update
+
+- Removed the duplicate `TTS SETTINGS` eyebrow; the section now uses one `Voice Engine Settings` heading.
+- Korean Voice, English Voice, Speed, and Pitch each use a compact single-row layout.
+- Announcements 5–9 now share the same boarding-category accent color.
+- Repeat controls use the same external label placement as their paired input fields.
+- Repeat controls are intentionally narrow so passenger-name, gate, floor, and time inputs receive most of the available width.
+

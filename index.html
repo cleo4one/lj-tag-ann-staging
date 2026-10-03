@@ -55,58 +55,37 @@
 
   <main class="page-shell">
     <section class="settings-card" aria-labelledby="settingsTitle">
-      <div class="section-heading-row">
-        <div>
-          <p class="eyebrow">TTS SETTINGS</p>
-          <h2 id="settingsTitle">Voice Engine Settings</h2>
+      <h2 id="settingsTitle" class="settings-title">Voice Engine Settings</h2>
+
+      <div class="settings-list">
+        <div class="settings-row voice-settings-row">
+          <label for="selVoiceKo" class="settings-label">Korean Voice</label>
+          <select id="selVoiceKo" class="control settings-control"></select>
+          <button id="btnPreviewKo" type="button" class="mini-button settings-action">Preview</button>
+        </div>
+
+        <div class="settings-row voice-settings-row">
+          <label for="selVoiceEn" class="settings-label">English Voice</label>
+          <select id="selVoiceEn" class="control settings-control"></select>
+          <button id="btnPreviewEn" type="button" class="mini-button settings-action">Preview</button>
+        </div>
+
+        <div class="settings-row slider-settings-row">
+          <label for="rngSpeed" class="settings-label">Speed</label>
+          <input type="range" id="rngSpeed" min="0.5" max="2" step="0.1" value="1" class="range-control settings-range">
+          <span id="lblSpeed" class="value-pill">1.0</span>
+          <button id="btnPreviewSpeed" type="button" class="mini-button settings-action">Preview</button>
+          <button id="btnResetSpeed" type="button" class="mini-button settings-reset">Reset</button>
+        </div>
+
+        <div class="settings-row slider-settings-row">
+          <label for="rngPitch" class="settings-label">Pitch</label>
+          <input type="range" id="rngPitch" min="0" max="2" step="0.1" value="1" class="range-control settings-range">
+          <span id="lblPitch" class="value-pill">1.0</span>
+          <button id="btnPreviewPitch" type="button" class="mini-button settings-action">Preview</button>
+          <button id="btnResetPitch" type="button" class="mini-button settings-reset">Reset</button>
         </div>
       </div>
-
-      <div class="settings-grid">
-        <div class="field-block">
-          <div class="label-row">
-            <label for="selVoiceKo">Korean Voice</label>
-            <button id="btnPreviewKo" type="button" class="mini-button">Preview</button>
-          </div>
-          <select id="selVoiceKo" class="control"></select>
-        </div>
-
-        <div class="field-block">
-          <div class="label-row">
-            <label for="selVoiceEn">English Voice</label>
-            <button id="btnPreviewEn" type="button" class="mini-button">Preview</button>
-          </div>
-          <select id="selVoiceEn" class="control"></select>
-        </div>
-      </div>
-
-      <div class="slider-grid">
-        <div class="field-block">
-          <div class="label-row">
-            <label for="rngSpeed">Speed</label>
-            <div class="inline-actions">
-              <span id="lblSpeed" class="value-pill">1.0</span>
-              <button id="btnPreviewSpeed" type="button" class="mini-button">Preview</button>
-              <button id="btnResetSpeed" type="button" class="mini-button">Reset</button>
-            </div>
-          </div>
-          <input type="range" id="rngSpeed" min="0.5" max="2" step="0.1" value="1" class="range-control">
-        </div>
-
-        <div class="field-block">
-          <div class="label-row">
-            <label for="rngPitch">Pitch</label>
-            <div class="inline-actions">
-              <span id="lblPitch" class="value-pill">1.0</span>
-              <button id="btnPreviewPitch" type="button" class="mini-button">Preview</button>
-              <button id="btnResetPitch" type="button" class="mini-button">Reset</button>
-            </div>
-          </div>
-          <input type="range" id="rngPitch" min="0" max="2" step="0.1" value="1" class="range-control">
-        </div>
-      </div>
-
-
     </section>
 
     <section aria-labelledby="catalogTitle">
