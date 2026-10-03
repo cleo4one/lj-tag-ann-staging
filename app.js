@@ -1,0 +1,1029 @@
+(() => {
+  'use strict';
+
+  const DATA = window.LJ_ANNOUNCEMENT_DATA;
+  if (!DATA || !Array.isArray(DATA.announcements)) {
+    const overlayStatus = document.getElementById('startStatus');
+    const startButton = document.getElementById('btnStart');
+    if (overlayStatus) overlayStatus.textContent = '방송 데이터 파일을 불러오지 못했습니다. data/announcements.js 파일을 확인해 주세요.';
+    if (startButton) startButton.disabled = true;
+    return;
+  }
+  const synth = window.speechSynthesis;
+  const hasSpeech = 'speechSynthesis' in window && typeof window.SpeechSynthesisUtterance === 'function';
+
+  const STORAGE = {
+    flight: 'ljtag.flight',
+    destination: 'ljtag.destination',
+    koVoice: 'ljtag.koVoice',
+    enVoice: 'ljtag.enVoice',
+    speed: 'ljtag.speed',
+    pitch: 'ljtag.pitch'
+  };
+
+  const LEGACY_STORAGE = {
+    flight: 'tts-flight',
+    destination: 'tts-dest',
+    koVoice: 'tts-ko-voice',
+    enVoice: 'tts-en-voice'
+  };
+
+  const translationCache = new Map();
+
+  const state = {
+    currentFlight: DATA.flights[0],
+    currentDest: Object.keys(DATA.destinations)[0],
+    voices: [],
+    unlocked: false,
+    keepAliveTimer: null,
+    active: null,
+    playbackId: 0
+  };
+
+  const els = {
+    startOverlay: document.getElementById('startOverlay'),
+    btnStart: document.getElementById('btnStart'),
+    btnStartFallback: document.getElementById('btnStartFallback'),
+    startStatus: document.getElementById('startStatus'),
+    branchLabel: document.getElementById('branchLabel'),
+    flightButtons: document.getElementById('flightButtons'),
+    destinationButtons: document.getElementById('destinationButtons'),
+    annCatalog: document.getElementById('annCatalog'),
+    catalogCount: document.getElementById('catalogCount'),
+    customAnnouncement: document.getElementById('customAnnouncement'),
+    selVoiceKo: document.getElementById('selVoiceKo'),
+    selVoiceEn: document.getElementById('selVoiceEn'),
+    voiceStatus: document.getElementById('voiceStatus'),
+    rngSpeed: document.getElementById('rngSpeed'),
+    rngPitch: document.getElementById('rngPitch'),
+    lblSpeed: document.getElementById('lblSpeed'),
+    lblPitch: document.getElementById('lblPitch'),
+    btnPreviewKo: document.getElementById('btnPreviewKo'),
+    btnPreviewEn: document.getElementById('btnPreviewEn'),
+    btnPreviewSpeed: document.getElementById('btnPreviewSpeed'),
+    btnPreviewPitch: document.getElementById('btnPreviewPitch'),
+    btnResetSpeed: document.getElementById('btnResetSpeed'),
+    btnResetPitch: document.getElementById('btnResetPitch'),
+    versionLabel: document.getElementById('versionLabel'),
+    modal: document.getElementById('alertModal'),
+    modalMessage: document.getElementById('modalMessage'),
+    modalClose: document.getElementById('modalClose')
+  };
+
+  function storageGet(key, fallback = null) {
+    try {
+      const value = localStorage.getItem(key);
+      return value === null ? fallback : value;
+    } catch (_) {
+      return fallback;
+    }
+  }
+
+  function storageSet(key, value) {
+    try { localStorage.setItem(key, String(value)); } catch (_) { /* storage may be unavailable */ }
+  }
+
+  function readPreference(key, legacyKey, fallback) {
+    return storageGet(key, legacyKey ? storageGet(legacyKey, fallback) : fallback);
+  }
+
+  function showModal(message) {
+    els.modalMessage.textContent = message;
+    els.modal.classList.remove('is-hidden');
+    els.modalClose.focus();
+  }
+
+  function closeModal() {
+    els.modal.classList.add('is-hidden');
+  }
+
+  function normalizeNumber(value) {
+    if (value === '' || value === null || value === undefined) return '';
+    const n = Number.parseInt(String(value), 10);
+    return Number.isFinite(n) ? String(n) : '';
+  }
+
+  function formatFlightNumberForReading(flightNumber) {
+    if (!flightNumber) return '';
+    const alphaMap = {
+      A:'에이', B:'비', C:'씨', D:'디', E:'이', F:'에프', G:'지', H:'에이치', I:'아이',
+      J:'제이', K:'케이', L:'엘', M:'엠', N:'엔', O:'오', P:'피', Q:'큐', R:'알',
+      S:'에스', T:'티', U:'유', V:'브이', W:'더블유', X:'엑스', Y:'와이', Z:'제트'
+    };
+    const digitMap = {'0':'공','1':'일','2':'이','3':'삼','4':'사','5':'오','6':'육','7':'칠','8':'팔','9':'구'};
+    const letters = (flightNumber.match(/[A-Za-z]+/g) || []).join('');
+    const numbers = (flightNumber.match(/\d+/g) || []).join('');
+    const letterText = letters.split('').map(ch => alphaMap[ch.toUpperCase()] || ch).join('');
+    const numberText = numbers.split('').map(ch => digitMap[ch] || ch).join(', ');
+    return [letterText, numberText].filter(Boolean).join(', ');
+  }
+
+  function detectStrongLanguage(char) {
+    if (/[가-힣ㄱ-ㅎㅏ-ㅣ]/.test(char)) return 'ko';
+    if (/[A-Za-zÀ-ÖØ-öø-ÿĀ-ž]/.test(char)) return 'en';
+    return null;
+  }
+
+  function parseTextToSegments(text, forcedLanguage = 'auto') {
+    if (!text) return [];
+    if (forcedLanguage === 'ko' || forcedLanguage === 'en') {
+      return [{ text, lang: forcedLanguage, startIndex: 0 }];
+    }
+
+    const segments = [];
+    let buffer = '';
+    let lang = null;
+    let startIndex = 0;
+
+    const push = () => {
+      if (!buffer) return;
+      segments.push({ text: buffer, lang: lang || 'ko', startIndex });
+      buffer = '';
+      lang = null;
+    };
+
+    for (let i = 0; i < text.length; i += 1) {
+      const char = text[i];
+      const charLang = detectStrongLanguage(char);
+
+      if (!buffer) {
+        buffer = char;
+        lang = charLang;
+        startIndex = i;
+        continue;
+      }
+
+      if (charLang === null) {
+        buffer += char;
+        continue;
+      }
+
+      if (lang === null) {
+        lang = charLang;
+        buffer += char;
+        continue;
+      }
+
+      if (charLang === lang) {
+        buffer += char;
+        continue;
+      }
+
+      push();
+      buffer = char;
+      lang = charLang;
+      startIndex = i;
+    }
+
+    push();
+    return segments;
+  }
+
+  function currentDestination(language = 'ko') {
+    const dest = DATA.destinations[state.currentDest] || DATA.destinations[Object.keys(DATA.destinations)[0]];
+    return language === 'en' ? dest.en : dest.ko;
+  }
+
+  function renderTemplate(template, context, mode = 'display', language = 'ko') {
+    if (!template) return '';
+    const base = {
+      ...context,
+      flightNumber: mode === 'speech' ? formatFlightNumberForReading(state.currentFlight) : state.currentFlight,
+      destination: currentDestination(language)
+    };
+    return template.replace(/\{([A-Za-z0-9_]+)\}/g, (match, key) => {
+      const value = base[key];
+      return value === undefined || value === null ? match : String(value);
+    });
+  }
+
+  function getAnnouncementById(id) {
+    return DATA.announcements.find(a => a.id === String(id));
+  }
+
+  function createEl(tag, className, text) {
+    const el = document.createElement(tag);
+    if (className) el.className = className;
+    if (text !== undefined) el.textContent = text;
+    return el;
+  }
+
+  function renderQuickControls() {
+    els.flightButtons.replaceChildren();
+    DATA.flights.forEach(flight => {
+      const btn = createEl('button', state.currentFlight === flight ? 'is-active' : '', flight);
+      btn.type = 'button';
+      btn.dataset.value = flight;
+      btn.setAttribute('aria-pressed', String(state.currentFlight === flight));
+      btn.addEventListener('click', () => {
+        if (state.currentFlight === flight) return;
+        stopSpeech();
+        state.currentFlight = flight;
+        storageSet(STORAGE.flight, flight);
+        renderQuickControls();
+        refreshAllPreviews();
+      });
+      els.flightButtons.appendChild(btn);
+    });
+
+    els.destinationButtons.replaceChildren();
+    Object.entries(DATA.destinations).forEach(([code, dest]) => {
+      const btn = createEl('button', state.currentDest === code ? 'is-active' : '', dest.label);
+      btn.type = 'button';
+      btn.dataset.value = code;
+      btn.setAttribute('aria-pressed', String(state.currentDest === code));
+      btn.addEventListener('click', () => {
+        if (state.currentDest === code) return;
+        stopSpeech();
+        state.currentDest = code;
+        storageSet(STORAGE.destination, code);
+        renderQuickControls();
+        refreshAllPreviews();
+      });
+      els.destinationButtons.appendChild(btn);
+    });
+  }
+
+  function renderInput(card, ann, spec) {
+    const group = createEl('div', 'input-group');
+    if (spec.type === 'textarea') group.classList.add('is-wide');
+
+    if (spec.type === 'repeat') {
+      const box = createEl('div', 'repeat-box');
+      const label = createEl('span', 'repeat-label', spec.label);
+      const controls = createEl('div', 'repeat-controls');
+      const minus = createEl('button', 'repeat-button', '−');
+      const value = createEl('span', 'repeat-value', String(spec.default ?? 1));
+      const plus = createEl('button', 'repeat-button', '+');
+      minus.type = plus.type = 'button';
+      minus.setAttribute('aria-label', `${spec.label} 감소`);
+      plus.setAttribute('aria-label', `${spec.label} 증가`);
+      value.dataset.inputKey = spec.key;
+      value.dataset.inputType = 'repeat';
+      value.dataset.value = String(spec.default ?? 1);
+
+      const change = delta => {
+        const current = Number.parseInt(value.dataset.value || '1', 10);
+        const min = spec.min ?? 1;
+        const max = spec.max ?? 99;
+        const next = Math.min(max, Math.max(min, current + delta));
+        value.dataset.value = String(next);
+        value.textContent = String(next);
+        updateCardPreview(card, ann);
+      };
+      minus.addEventListener('click', () => change(-1));
+      plus.addEventListener('click', () => change(1));
+      controls.append(minus, value, plus);
+      box.append(label, controls);
+      group.appendChild(box);
+      return group;
+    }
+
+    const labelRow = createEl('div', 'input-label-row');
+    const label = createEl('label', 'input-label', spec.label);
+    const inputId = `ann-${ann.id}-${spec.key}`;
+    label.htmlFor = inputId;
+    labelRow.appendChild(label);
+
+    let input;
+    if (spec.type === 'textarea') {
+      input = createEl('textarea', 'textarea-control');
+      input.rows = 2;
+      input.autocomplete = 'off';
+      input.spellcheck = false;
+      if (spec.translate) {
+        const translate = createEl('button', 'mini-button translate-button', '영문 이름 한글 번역');
+        translate.type = 'button';
+        translate.dataset.translateTarget = spec.key;
+        translate.title = '인터넷 연결 필요';
+        translate.addEventListener('click', () => translateName(card, ann, input, translate));
+        labelRow.appendChild(translate);
+      }
+    } else if (spec.type === 'select') {
+      input = createEl('select', 'input-control');
+      (spec.options || []).forEach(optionValue => {
+        const option = document.createElement('option');
+        option.value = optionValue;
+        option.textContent = optionValue;
+        input.appendChild(option);
+      });
+      if (spec.default !== undefined) input.value = String(spec.default);
+    } else {
+      input = createEl('input', 'input-control');
+      input.type = 'text';
+      input.inputMode = 'numeric';
+      input.autocomplete = 'off';
+      input.addEventListener('input', () => {
+        const sanitized = input.value.replace(/[^0-9]/g, '');
+        if (input.value !== sanitized) input.value = sanitized;
+      });
+    }
+
+    input.id = inputId;
+    input.dataset.inputKey = spec.key;
+    input.dataset.inputType = spec.type;
+    if (spec.placeholder) input.placeholder = spec.placeholder;
+    if (spec.default !== undefined && spec.type !== 'select') input.value = String(spec.default);
+    input.addEventListener('input', () => updateCardPreview(card, ann));
+    input.addEventListener('change', () => updateCardPreview(card, ann));
+    group.append(labelRow, input);
+    return group;
+  }
+
+  function buildContext(card, ann, preview = false) {
+    const context = {};
+    const specs = ann.inputs || [];
+
+    specs.forEach(spec => {
+      const el = card.querySelector(`[data-input-key="${spec.key}"]`);
+      let value = '';
+      if (spec.type === 'repeat') value = el?.dataset.value || String(spec.default ?? 1);
+      else value = el?.value?.trim() || '';
+
+      if ((spec.type === 'number') && value) value = normalizeNumber(value);
+      if (spec.type === 'textarea' && value) value = value.replace(/\s+/g, ' ').trim();
+
+      if (!value && preview && spec.type !== 'repeat') {
+        if (spec.key === 'names') value = '[승객 이름]';
+        else if (spec.key === 'gate') value = '[게이트]';
+        else if (spec.key === 'floor') value = '[층]';
+        else if (spec.key === 'hour') value = '[시]';
+        else if (spec.key === 'minute') value = '[분]';
+        else value = `[${spec.label}]`;
+      }
+      context[spec.key] = value;
+    });
+
+    (ann.derived || []).forEach(rule => {
+      const unit = rule.template.replace(/\{([A-Za-z0-9_]+)\}/g, (_, key) => context[key] ?? '');
+      const repeat = Math.max(1, Number.parseInt(context[rule.repeatKey] || '1', 10) || 1);
+      context[rule.key] = Array(repeat).fill(unit).join(rule.separator ?? ', ');
+    });
+
+    return context;
+  }
+
+  function validateAnnouncement(card, ann) {
+    const context = buildContext(card, ann, false);
+    for (const spec of ann.inputs || []) {
+      if (spec.type === 'repeat') continue;
+      const value = context[spec.key];
+      if (spec.required && !value) return { ok: false, message: `${spec.label}: 값을 입력해 주세요.` };
+      if (spec.type === 'number' && value) {
+        const n = Number.parseInt(value, 10);
+        if (!Number.isFinite(n)) return { ok: false, message: `${spec.label}: 숫자로 입력해 주세요.` };
+        if (spec.min !== undefined && n < spec.min) return { ok: false, message: `${spec.label}: ${spec.min} 이상으로 입력해 주세요.` };
+        if (spec.max !== undefined && n > spec.max) return { ok: false, message: `${spec.label}: ${spec.max} 이하로 입력해 주세요.` };
+      }
+    }
+    return { ok: true, context };
+  }
+
+  function updateCardPreview(card, ann) {
+    const context = buildContext(card, ann, true);
+    const script = card.querySelector('[data-role="script"]');
+    if (script && state.active?.card !== card) {
+      script.textContent = renderTemplate(ann.template, context, 'display', 'ko');
+    }
+    const english = card.querySelector('[data-role="english"]');
+    if (english && ann.englishTemplate) {
+      english.textContent = renderTemplate(ann.englishTemplate, context, 'display', 'en');
+    }
+  }
+
+  function refreshAllPreviews() {
+    DATA.announcements.forEach(ann => {
+      const card = els.annCatalog.querySelector(`[data-ann-id="${ann.id}"]`);
+      if (card) updateCardPreview(card, ann);
+    });
+  }
+
+  function scrollOpenedCardToTop(card) {
+    if (!card) return;
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const align = () => {
+      const stickyHeader = document.querySelector('.app-header');
+      const headerBottom = stickyHeader ? stickyHeader.getBoundingClientRect().bottom : 0;
+      const targetTop = window.scrollY + card.getBoundingClientRect().top - headerBottom - 8;
+      window.scrollTo({
+        top: Math.max(0, targetTop),
+        behavior: reduceMotion ? 'auto' : 'smooth'
+      });
+    };
+    // Wait until the selected card opens and the previously open card collapses.
+    window.requestAnimationFrame(() => window.requestAnimationFrame(align));
+  }
+
+  function renderAnnouncementCard(ann) {
+    const card = createEl('article', 'ann-card');
+    card.dataset.annId = ann.id;
+
+    if (ann.tone) card.dataset.tone = ann.tone;
+
+    const header = createEl('button', 'card-header');
+    header.type = 'button';
+    header.setAttribute('aria-expanded', 'false');
+
+    const visual = createEl('span', 'card-visual');
+    visual.setAttribute('aria-hidden', 'true');
+    const icon = createEl('span', 'card-icon', ann.icon || '🔊');
+    const number = createEl('span', 'card-number-badge', ann.id);
+    visual.append(icon, number);
+
+    const titleBlock = createEl('span', 'card-title-block');
+    const title = createEl('h3', 'card-title', ann.title);
+    const summary = createEl('span', 'card-summary', ann.summary);
+    titleBlock.append(title, summary);
+
+    const chevron = createEl('span', 'card-chevron', '⌄');
+    chevron.setAttribute('aria-hidden', 'true');
+    header.append(visual, titleBlock, chevron);
+
+    const body = createEl('div', 'card-body');
+    body.hidden = true;
+
+    if (ann.inputs?.length) {
+      const inputArea = createEl('div', 'input-area');
+      ann.inputs.forEach(spec => inputArea.appendChild(renderInput(card, ann, spec)));
+      body.appendChild(inputArea);
+    }
+
+    const progress = createEl('div', 'progress-wrap');
+    const progressFill = createEl('div', 'progress-fill');
+    progress.appendChild(progressFill);
+    body.appendChild(progress);
+
+    if (ann.englishTemplate) {
+      const toolbar = createEl('div', 'script-toolbar');
+      const enBtn = createEl('button', 'mini-button english-button', 'EN 번역 보기');
+      enBtn.type = 'button';
+      toolbar.appendChild(enBtn);
+      body.appendChild(toolbar);
+
+      const englishPanel = createEl('div', 'english-reference');
+      englishPanel.dataset.role = 'english';
+      englishPanel.hidden = true;
+      body.appendChild(englishPanel);
+      enBtn.addEventListener('click', () => {
+        englishPanel.hidden = !englishPanel.hidden;
+        enBtn.textContent = englishPanel.hidden ? 'EN 번역 보기' : 'EN 번역 닫기';
+      });
+    }
+
+    const script = createEl('p', 'script-text');
+    script.dataset.role = 'script';
+    body.appendChild(script);
+
+    const validation = createEl('p', 'validation-message');
+    validation.hidden = true;
+    validation.dataset.role = 'validation';
+    validation.setAttribute('role', 'alert');
+    body.appendChild(validation);
+
+    const player = createEl('div', 'player-row');
+    const play = createEl('button', 'button button-primary play-button', '▶ 재생');
+    const stop = createEl('button', 'button stop-button', '■ 정지');
+    play.type = stop.type = 'button';
+    play.dataset.role = 'play';
+    stop.dataset.role = 'stop';
+    player.append(play, stop);
+    body.appendChild(player);
+
+    header.addEventListener('click', () => {
+      const shouldOpen = body.hidden;
+      stopSpeech();
+      els.annCatalog.querySelectorAll('.ann-card').forEach(otherCard => {
+        const otherBody = otherCard.querySelector('.card-body');
+        const otherHeader = otherCard.querySelector('.card-header');
+        if (otherBody) otherBody.hidden = true;
+        if (otherHeader) otherHeader.setAttribute('aria-expanded', 'false');
+      });
+      if (shouldOpen) {
+        body.hidden = false;
+        header.setAttribute('aria-expanded', 'true');
+        scrollOpenedCardToTop(card);
+      }
+    });
+
+    play.addEventListener('click', () => playAnnouncement(card, ann));
+    stop.addEventListener('click', () => stopSpeech());
+
+    card.append(header, body);
+    updateCardPreview(card, ann);
+    return card;
+  }
+
+  function renderAnnouncements() {
+    els.annCatalog.replaceChildren();
+    DATA.announcements.forEach(ann => els.annCatalog.appendChild(renderAnnouncementCard(ann)));
+  }
+
+  function renderCustomAnnouncement() {
+    const card = createEl('article', 'ann-card custom-card');
+    card.dataset.annId = 'free';
+    const label = createEl('label', 'input-label', '방송할 문장을 입력하세요.');
+    label.htmlFor = 'customText';
+    const textarea = createEl('textarea', 'textarea-control');
+    textarea.id = 'customText';
+    textarea.rows = 5;
+    textarea.placeholder = '한국어와 영어를 함께 입력할 수 있습니다.';
+    textarea.spellcheck = true;
+    const progress = createEl('div', 'progress-wrap');
+    const fill = createEl('div', 'progress-fill');
+    progress.appendChild(fill);
+    const script = createEl('p', 'script-text custom-preview', '입력한 문장이 여기에 표시됩니다.');
+    script.dataset.role = 'script';
+    const validation = createEl('p', 'validation-message');
+    validation.hidden = true;
+    validation.dataset.role = 'validation';
+    validation.setAttribute('role', 'alert');
+    const player = createEl('div', 'player-row');
+    const play = createEl('button', 'button button-primary play-button', '▶ 재생');
+    const stop = createEl('button', 'button stop-button', '■ 정지');
+    play.type = stop.type = 'button';
+    play.dataset.role = 'play';
+    stop.dataset.role = 'stop';
+    player.append(play, stop);
+
+    textarea.addEventListener('input', () => {
+      if (state.active?.card === card) return;
+      script.textContent = textarea.value.trim() || '입력한 문장이 여기에 표시됩니다.';
+    });
+    play.addEventListener('click', () => {
+      if (state.active?.card === card) {
+        togglePauseResume(card);
+        return;
+      }
+      const text = textarea.value.trim();
+      if (!text) {
+        showValidation(card, '방송할 문장을 입력해 주세요.');
+        return;
+      }
+      clearValidation(card);
+      script.textContent = text;
+      beginPlayback(card, text, 'auto');
+    });
+    stop.addEventListener('click', () => stopSpeech());
+
+    card.append(label, textarea, progress, script, validation, player);
+    els.customAnnouncement.replaceChildren(card);
+  }
+
+  function showValidation(card, message) {
+    const el = card.querySelector('[data-role="validation"]');
+    if (!el) return;
+    el.textContent = message;
+    el.hidden = false;
+  }
+
+  function clearValidation(card) {
+    const el = card.querySelector('[data-role="validation"]');
+    if (!el) return;
+    el.textContent = '';
+    el.hidden = true;
+  }
+
+  async function translateName(card, ann, input, button) {
+    const query = input.value.trim();
+    if (!query) {
+      showValidation(card, '승객 이름을 먼저 입력해 주세요.');
+      return;
+    }
+    clearValidation(card);
+    if (translationCache.has(query)) {
+      input.value = translationCache.get(query);
+      updateCardPreview(card, ann);
+      return;
+    }
+    if (navigator.onLine === false) {
+      showModal('이름 번역에는 인터넷 연결이 필요합니다.\n번역 없이 직접 한글 발음을 입력하셔도 방송 기능은 정상적으로 사용할 수 있습니다.');
+      return;
+    }
+
+    const original = button.textContent;
+    button.disabled = true;
+    button.textContent = '번역 중…';
+    try {
+      const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(query)}&langpair=en|ko`;
+      const response = await fetch(url, { method: 'GET', referrerPolicy: 'no-referrer' });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const result = await response.json();
+      const translated = result?.responseData?.translatedText;
+      if (!translated) throw new Error('번역 결과 없음');
+      const decoder = document.createElement('textarea');
+      decoder.innerHTML = translated;
+      input.value = decoder.value;
+      translationCache.set(query, decoder.value);
+      updateCardPreview(card, ann);
+    } catch (error) {
+      console.error('Translation failed:', error);
+      showModal(`이름 번역에 실패했습니다.\n(${error.message})\n직접 한글 발음을 입력해 주세요.`);
+    } finally {
+      button.disabled = false;
+      button.textContent = original;
+    }
+  }
+
+  function renderHighlightText(element, text) {
+    element.replaceChildren();
+    const tokens = [];
+    const regex = /\S+/g;
+    let lastIndex = 0;
+    let match;
+    while ((match = regex.exec(text)) !== null) {
+      if (match.index > lastIndex) element.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+      const span = createEl('span', '', match[0]);
+      element.appendChild(span);
+      tokens.push({ span, start: match.index, end: match.index + match[0].length });
+      lastIndex = match.index + match[0].length;
+    }
+    if (lastIndex < text.length) element.appendChild(document.createTextNode(text.slice(lastIndex)));
+    return tokens;
+  }
+
+  function updateHighlight(active, charIndex) {
+    if (!active?.tokens?.length) return;
+    let target = active.tokens.find(token => charIndex >= token.start && charIndex < token.end);
+    if (!target) target = active.tokens.find(token => token.start >= charIndex) || active.tokens[active.tokens.length - 1];
+    active.tokens.forEach(token => token.span.classList.toggle('hl-word', token === target));
+    const pct = Math.min(100, Math.max(0, (Math.max(charIndex, target.end) / active.text.length) * 100));
+    active.progress.style.width = `${pct}%`;
+  }
+
+  function selectedVoice(language) {
+    const select = language === 'en' ? els.selVoiceEn : els.selVoiceKo;
+    if (!select.value) return null;
+    return state.voices.find(v => v.name === select.value && v.lang.toLowerCase().startsWith(language))
+      || state.voices.find(v => v.name === select.value)
+      || null;
+  }
+
+  function beginPlayback(card, text, forcedLanguage = 'auto') {
+    if (!hasSpeech) {
+      showModal('이 브라우저에서는 Web Speech API를 사용할 수 없습니다. Safari 또는 Chrome 계열 최신 브라우저에서 다시 시도해 주세요.');
+      return;
+    }
+    stopSpeech();
+    state.playbackId += 1;
+    const id = state.playbackId;
+    const script = card.querySelector('[data-role="script"]');
+    const progress = card.querySelector('.progress-fill');
+    const playButton = card.querySelector('[data-role="play"]');
+    const segments = parseTextToSegments(text, forcedLanguage);
+    const tokens = renderHighlightText(script, text);
+
+    state.active = {
+      id, card, text, script, progress, playButton, segments, tokens,
+      segmentIndex: 0,
+      status: 'playing'
+    };
+    progress.style.width = '0%';
+    playButton.textContent = '❚❚ 일시정지';
+    speakNextSegment(id);
+  }
+
+  function speakNextSegment(id) {
+    const active = state.active;
+    if (!active || active.id !== id) return;
+    if (active.segmentIndex >= active.segments.length) {
+      finishPlayback(id);
+      return;
+    }
+
+    const segment = active.segments[active.segmentIndex];
+    const utterance = new SpeechSynthesisUtterance(segment.text);
+    utterance.rate = Number.parseFloat(els.rngSpeed.value) || 1;
+    utterance.pitch = Number.parseFloat(els.rngPitch.value) || 1;
+    utterance.lang = segment.lang === 'en' ? 'en-US' : 'ko-KR';
+    const voice = selectedVoice(segment.lang);
+    if (voice) utterance.voice = voice;
+
+    utterance.onboundary = event => {
+      const current = state.active;
+      if (!current || current.id !== id || typeof event.charIndex !== 'number') return;
+      const globalIndex = segment.startIndex + event.charIndex;
+      updateHighlight(current, globalIndex);
+    };
+
+    utterance.onend = () => {
+      const current = state.active;
+      if (!current || current.id !== id) return;
+      const segmentEnd = segment.startIndex + segment.text.length;
+      updateHighlight(current, Math.max(0, segmentEnd - 1));
+      current.segmentIndex += 1;
+      window.setTimeout(() => speakNextSegment(id), 10);
+    };
+
+    utterance.onerror = event => {
+      const current = state.active;
+      if (!current || current.id !== id) return;
+      if (event.error === 'canceled' || event.error === 'interrupted') return;
+      console.error('Speech error:', event.error);
+      showModal(`음성 재생 중 오류가 발생했습니다. (${event.error || 'unknown'})\n다른 TTS 음성을 선택하거나 기기 음성 설정을 확인해 주세요.`);
+      stopSpeech();
+    };
+
+    try {
+      synth.speak(utterance);
+    } catch (error) {
+      console.error(error);
+      showModal('음성 재생을 시작할 수 없습니다. 기기 TTS 설정을 확인해 주세요.');
+      stopSpeech();
+    }
+  }
+
+  function finishPlayback(id) {
+    const active = state.active;
+    if (!active || active.id !== id) return;
+    active.progress.style.width = '100%';
+    active.playButton.textContent = '▶ 재생';
+    active.status = 'finished';
+    const finishedCard = active.card;
+    const finishedId = id;
+    window.setTimeout(() => {
+      if (state.active?.id === finishedId) {
+        state.active = null;
+        resetPlaybackUI(finishedCard);
+      }
+    }, 450);
+  }
+
+  function resetPlaybackUI(card) {
+    if (!card) return;
+    const play = card.querySelector('[data-role="play"]');
+    const progress = card.querySelector('.progress-fill');
+    if (play) play.textContent = '▶ 재생';
+    if (progress) progress.style.width = '0%';
+
+    if (card.dataset.annId === 'free') {
+      const input = card.querySelector('#customText');
+      const script = card.querySelector('[data-role="script"]');
+      if (script) script.textContent = input?.value.trim() || '입력한 문장이 여기에 표시됩니다.';
+    } else {
+      const ann = getAnnouncementById(card.dataset.annId);
+      if (ann) updateCardPreview(card, ann);
+    }
+  }
+
+  function stopSpeech() {
+    state.playbackId += 1;
+    const activeCard = state.active?.card || null;
+    state.active = null;
+    if (hasSpeech) {
+      try { synth.cancel(); } catch (_) { /* noop */ }
+    }
+    if (activeCard) resetPlaybackUI(activeCard);
+  }
+
+  function togglePauseResume(card) {
+    const active = state.active;
+    if (!active || active.card !== card) return false;
+    if (active.status === 'paused') {
+      try { synth.resume(); } catch (_) { /* noop */ }
+      active.status = 'playing';
+      active.playButton.textContent = '❚❚ 일시정지';
+      return true;
+    }
+    if (active.status === 'playing') {
+      try { synth.pause(); } catch (_) { /* noop */ }
+      active.status = 'paused';
+      active.playButton.textContent = '▶ 계속 재생';
+      return true;
+    }
+    return false;
+  }
+
+  function playAnnouncement(card, ann) {
+    if (state.active?.card === card && togglePauseResume(card)) return;
+    const validation = validateAnnouncement(card, ann);
+    if (!validation.ok) {
+      showValidation(card, validation.message);
+      return;
+    }
+    clearValidation(card);
+    const text = renderTemplate(ann.template, validation.context, 'speech', 'ko').trim();
+    if (!text) {
+      showValidation(card, '방송문을 생성할 수 없습니다. 입력값을 확인해 주세요.');
+      return;
+    }
+    beginPlayback(card, text, ann.language || 'auto');
+  }
+
+  function populateVoiceSelect(select, voices, savedName, fallbackLabel) {
+    select.replaceChildren();
+    if (!voices.length) {
+      const option = document.createElement('option');
+      option.value = '';
+      option.textContent = `${fallbackLabel} · 기기 기본 음성`;
+      select.appendChild(option);
+      return;
+    }
+    voices.forEach(voice => {
+      const option = document.createElement('option');
+      option.value = voice.name;
+      option.textContent = `${voice.name} (${voice.lang})`;
+      select.appendChild(option);
+    });
+    if (savedName && voices.some(v => v.name === savedName)) select.value = savedName;
+  }
+
+  function refreshVoices() {
+    if (!hasSpeech) return 0;
+    const seen = new Set();
+    state.voices = synth.getVoices()
+      .filter(voice => {
+        const key = `${voice.name}|${voice.lang}|${voice.voiceURI}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    const ko = state.voices.filter(v => v.lang.toLowerCase().startsWith('ko'));
+    const en = state.voices.filter(v => v.lang.toLowerCase().startsWith('en'));
+    const koSaved = readPreference(STORAGE.koVoice, LEGACY_STORAGE.koVoice, '');
+    const enSaved = readPreference(STORAGE.enVoice, LEGACY_STORAGE.enVoice, '');
+    const currentKo = els.selVoiceKo.value || koSaved;
+    const currentEn = els.selVoiceEn.value || enSaved;
+    populateVoiceSelect(els.selVoiceKo, ko, currentKo, '한국어');
+    populateVoiceSelect(els.selVoiceEn, en, currentEn, '영어');
+
+    els.voiceStatus.textContent = `KO ${ko.length} · EN ${en.length}`;
+    const voiceCountLabel = `감지된 TTS 음성: 한국어 ${ko.length}개, 영어 ${en.length}개`;
+    els.voiceStatus.title = voiceCountLabel;
+    els.voiceStatus.setAttribute('aria-label', voiceCountLabel);
+    els.voiceStatus.classList.toggle('is-ready', state.voices.length > 0);
+    return state.voices.length;
+  }
+
+  function loadVoices(timeoutMs = 10000) {
+    return new Promise((resolve, reject) => {
+      const started = Date.now();
+      const poll = () => {
+        const count = refreshVoices();
+        if (count > 0) return resolve(count);
+        if (Date.now() - started >= timeoutMs) return reject(new Error('Voice loading timed out.'));
+        window.setTimeout(poll, 100);
+      };
+      poll();
+    });
+  }
+
+  function wakeSpeechSynth() {
+    if (!hasSpeech || !state.unlocked || synth.speaking || synth.paused) return;
+    try {
+      const utterance = new SpeechSynthesisUtterance(' ');
+      utterance.volume = 0;
+      utterance.rate = 1;
+      synth.speak(utterance);
+    } catch (_) { /* noop */ }
+  }
+
+  async function startApp() {
+    if (!hasSpeech) {
+      els.startStatus.textContent = '이 브라우저는 Web Speech API를 지원하지 않습니다.';
+      els.btnStart.disabled = true;
+      return;
+    }
+    els.btnStart.disabled = true;
+    els.btnStartFallback.classList.add('is-hidden');
+    els.btnStart.textContent = '음성 목록 불러오는 중…';
+    els.startStatus.textContent = '기기에 설치된 TTS 음성을 확인하고 있습니다.';
+
+    try {
+      const unlock = new SpeechSynthesisUtterance(' ');
+      unlock.volume = 0;
+      synth.speak(unlock);
+    } catch (_) { /* noop */ }
+
+    try {
+      await loadVoices();
+      unlockApp();
+    } catch (error) {
+      console.error(error);
+      els.startStatus.textContent = '음성 목록을 불러오지 못했습니다. 기기 TTS 설정을 확인한 뒤 다시 시도해 주세요.';
+      els.btnStart.disabled = false;
+      els.btnStart.textContent = '다시 시도';
+      els.btnStartFallback.classList.remove('is-hidden');
+    }
+  }
+
+  function unlockApp() {
+    state.unlocked = true;
+    els.startOverlay.classList.add('is-hidden');
+    if (state.keepAliveTimer) window.clearInterval(state.keepAliveTimer);
+    state.keepAliveTimer = window.setInterval(wakeSpeechSynth, 10000);
+    wakeSpeechSynth();
+  }
+
+  function previewSpeech(text, language) {
+    if (!hasSpeech) return;
+    stopSpeech();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = Number.parseFloat(els.rngSpeed.value) || 1;
+    utterance.pitch = Number.parseFloat(els.rngPitch.value) || 1;
+    utterance.lang = language === 'en' ? 'en-US' : 'ko-KR';
+    const voice = selectedVoice(language);
+    if (voice) utterance.voice = voice;
+    try { synth.speak(utterance); } catch (_) { showModal('미리듣기를 재생할 수 없습니다.'); }
+  }
+
+  function initSettings() {
+    const storedSpeed = Number.parseFloat(storageGet(STORAGE.speed, '1'));
+    const storedPitch = Number.parseFloat(storageGet(STORAGE.pitch, '1'));
+    els.rngSpeed.value = Number.isFinite(storedSpeed) ? String(Math.min(2, Math.max(.5, storedSpeed))) : '1';
+    els.rngPitch.value = Number.isFinite(storedPitch) ? String(Math.min(2, Math.max(0, storedPitch))) : '1';
+    els.lblSpeed.textContent = Number.parseFloat(els.rngSpeed.value).toFixed(1);
+    els.lblPitch.textContent = Number.parseFloat(els.rngPitch.value).toFixed(1);
+
+    els.rngSpeed.addEventListener('input', () => {
+      els.lblSpeed.textContent = Number.parseFloat(els.rngSpeed.value).toFixed(1);
+      storageSet(STORAGE.speed, els.rngSpeed.value);
+    });
+    els.rngPitch.addEventListener('input', () => {
+      els.lblPitch.textContent = Number.parseFloat(els.rngPitch.value).toFixed(1);
+      storageSet(STORAGE.pitch, els.rngPitch.value);
+    });
+    els.selVoiceKo.addEventListener('change', () => storageSet(STORAGE.koVoice, els.selVoiceKo.value));
+    els.selVoiceEn.addEventListener('change', () => storageSet(STORAGE.enVoice, els.selVoiceEn.value));
+    els.btnPreviewKo.addEventListener('click', () => previewSpeech('안녕하세요. 한국어 음성입니다.', 'ko'));
+    els.btnPreviewEn.addEventListener('click', () => previewSpeech('Hello, this is an English voice.', 'en'));
+    els.btnPreviewSpeed.addEventListener('click', () => previewSpeech('현재 설정된 음성 속도입니다.', 'ko'));
+    els.btnPreviewPitch.addEventListener('click', () => previewSpeech('현재 설정된 음높이입니다.', 'ko'));
+    els.btnResetSpeed.addEventListener('click', () => {
+      els.rngSpeed.value = '1';
+      els.lblSpeed.textContent = '1.0';
+      storageSet(STORAGE.speed, '1');
+    });
+    els.btnResetPitch.addEventListener('click', () => {
+      els.rngPitch.value = '1';
+      els.lblPitch.textContent = '1.0';
+      storageSet(STORAGE.pitch, '1');
+    });
+  }
+
+  function initPreferences() {
+    const savedFlight = readPreference(STORAGE.flight, LEGACY_STORAGE.flight, DATA.flights[0]);
+    const savedDest = readPreference(STORAGE.destination, LEGACY_STORAGE.destination, Object.keys(DATA.destinations)[0]);
+    state.currentFlight = DATA.flights.includes(savedFlight) ? savedFlight : DATA.flights[0];
+    state.currentDest = Object.prototype.hasOwnProperty.call(DATA.destinations, savedDest) ? savedDest : Object.keys(DATA.destinations)[0];
+  }
+
+  function initServiceWorker() {
+    if (!('serviceWorker' in navigator)) return;
+    if (!/^https?:$/.test(location.protocol)) return;
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./service-worker.js').catch(error => console.warn('Service worker registration failed:', error));
+    });
+  }
+
+  function preventPageZoom() {
+    const preventGesture = event => event.preventDefault();
+    document.addEventListener('gesturestart', preventGesture, { passive: false });
+    document.addEventListener('gesturechange', preventGesture, { passive: false });
+    document.addEventListener('gestureend', preventGesture, { passive: false });
+    document.addEventListener('touchmove', event => {
+      if (event.touches && event.touches.length > 1) event.preventDefault();
+    }, { passive: false });
+  }
+
+  function init() {
+    preventPageZoom();
+    initPreferences();
+    initSettings();
+    els.branchLabel.textContent = DATA.branch || 'TAG Branch';
+    els.versionLabel.textContent = `Ver. ${DATA.appVersion || '—'}`;
+    if (els.catalogCount) els.catalogCount.textContent = `${DATA.announcements.length} announcements`;
+    renderQuickControls();
+    renderAnnouncements();
+    renderCustomAnnouncement();
+
+    els.btnStart.addEventListener('click', startApp);
+    els.btnStartFallback.addEventListener('click', () => {
+      refreshVoices();
+      unlockApp();
+    });
+    els.modalClose.addEventListener('click', closeModal);
+    els.modal.addEventListener('click', event => { if (event.target === els.modal) closeModal(); });
+    document.addEventListener('keydown', event => { if (event.key === 'Escape' && !els.modal.classList.contains('is-hidden')) closeModal(); });
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        refreshVoices();
+        wakeSpeechSynth();
+      }
+    });
+    if (hasSpeech && typeof synth.addEventListener === 'function') {
+      synth.addEventListener('voiceschanged', refreshVoices);
+    } else if (hasSpeech) {
+      synth.onvoiceschanged = refreshVoices;
+    }
+
+    initServiceWorker();
+    if (!hasSpeech) {
+      els.voiceStatus.textContent = 'TTS 미지원';
+      els.startStatus.textContent = '이 브라우저에서는 Web Speech API를 사용할 수 없습니다.';
+    }
+  }
+
+  init();
+})();
