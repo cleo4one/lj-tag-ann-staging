@@ -5,12 +5,19 @@
  * UI labels are English; announcement templates preserve their operational language.
  */
 window.LJ_ANNOUNCEMENT_DATA = {
-  "appVersion": "20261004.4",
+  "appVersion": "20261004.5",
   "branch": "TAG Branch",
   "flights": [
     "LJ044",
     "LJ046"
   ],
+  "codeshares": {
+    "LJ044": {
+      "carrierKo": "대한항공",
+      "carrierEn": "Korean Air",
+      "flight": "KE5768"
+    }
+  },
   "destinations": {
     "ICN": {
       "label": "ICN",

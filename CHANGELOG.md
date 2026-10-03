@@ -1,3 +1,13 @@
+# 20261004.5
+
+- Moved the `Keep Awake` control into the top header next to the branch branding.
+- Changed the top-left brand label from `JINAIR` to `JIN AIR`.
+- Added a persistent `Codeshare` toggle next to the flight selector.
+- LJ044 now displays `CS KE5768` when Codeshare is enabled; LJ046 remains unchanged.
+- Korean flight-number placeholders automatically include `공동운항 대한항공 KE5768` for LJ044 when Codeshare is enabled, including pronunciation-optimized TTS text.
+- English references also include the Korean Air codeshare flight where applicable.
+- Added a data-level `codeshares` mapping so future codeshare flights can be maintained without editing announcement templates.
+
 # 20261004.4
 
 - Added Announcement 16: **Passenger Paging (General)**.

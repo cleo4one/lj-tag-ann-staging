@@ -29,13 +29,26 @@
 
   <header class="app-header">
     <div class="header-inner">
-      <div class="brand-block">
-        <strong class="brand">JINAIR</strong>
-        <span class="branch" id="branchLabel">TAG Branch</span>
+      <div class="header-top-row">
+        <div class="brand-block">
+          <strong class="brand">JIN AIR</strong>
+          <span class="branch" id="branchLabel">TAG Branch</span>
+        </div>
+        <label class="header-toggle keep-awake-toggle" for="chkKeepAwake">
+          <span class="header-toggle-label">Keep Awake</span>
+          <input id="chkKeepAwake" type="checkbox">
+          <span class="compact-switch-track" aria-hidden="true"><span class="compact-switch-thumb"></span></span>
+          <span id="wakeLockStatus" class="sr-only" aria-live="polite">Off</span>
+        </label>
       </div>
-      <div class="quick-controls" aria-label="Flight and destination">
-        <div id="flightButtons" class="segmented-control" aria-label="Flight number"></div>
-        <div id="destinationButtons" class="segmented-control" aria-label="Destination"></div>
+      <div class="quick-controls" aria-label="Flight, codeshare and destination">
+        <label class="header-toggle codeshare-toggle" for="chkCodeshare">
+          <span class="header-toggle-label">Codeshare</span>
+          <input id="chkCodeshare" type="checkbox">
+          <span class="compact-switch-track" aria-hidden="true"><span class="compact-switch-thumb"></span></span>
+        </label>
+        <div id="flightButtons" class="segmented-control flight-control" aria-label="Flight number"></div>
+        <div id="destinationButtons" class="segmented-control destination-control" aria-label="Destination"></div>
       </div>
     </div>
   </header>
@@ -95,17 +108,7 @@
         </div>
       </div>
 
-      <div class="utility-setting" id="wakeLockSetting">
-        <div class="utility-setting-copy">
-          <label for="chkKeepAwake" class="utility-setting-title">Keep Screen Awake</label>
-          <p id="wakeLockHint" class="field-hint">Prevents the phone from dimming or locking while this page is visible.</p>
-        </div>
-        <label class="switch-control" for="chkKeepAwake">
-          <input id="chkKeepAwake" type="checkbox">
-          <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
-          <span id="wakeLockStatus" class="switch-status">Off</span>
-        </label>
-      </div>
+
     </section>
 
     <section aria-labelledby="catalogTitle">

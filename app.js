@@ -19,7 +19,8 @@
     enVoice: 'ljtag.enVoice',
     speed: 'ljtag.speed',
     pitch: 'ljtag.pitch',
-    keepAwake: 'ljtag.keepAwake'
+    keepAwake: 'ljtag.keepAwake',
+    codeshare: 'ljtag.codeshare'
   };
 
   const LEGACY_STORAGE = {
@@ -40,7 +41,8 @@
     active: null,
     playbackId: 0,
     wakeLock: null,
-    keepAwakeEnabled: false
+    keepAwakeEnabled: false,
+    codeshareEnabled: false
   };
 
   const els = {
@@ -67,8 +69,8 @@
     btnResetSpeed: document.getElementById('btnResetSpeed'),
     btnResetPitch: document.getElementById('btnResetPitch'),
     chkKeepAwake: document.getElementById('chkKeepAwake'),
+    chkCodeshare: document.getElementById('chkCodeshare'),
     wakeLockStatus: document.getElementById('wakeLockStatus'),
-    wakeLockHint: document.getElementById('wakeLockHint'),
     versionLabel: document.getElementById('versionLabel'),
     modal: document.getElementById('alertModal'),
     modalMessage: document.getElementById('modalMessage'),
@@ -121,6 +123,31 @@
     const letterText = letters.split('').map(ch => alphaMap[ch.toUpperCase()] || ch).join('');
     const numberText = numbers.split('').map(ch => digitMap[ch] || ch).join(', ');
     return [letterText, numberText].filter(Boolean).join(', ');
+  }
+
+  function currentCodeshare() {
+    if (!state.codeshareEnabled || !DATA.codeshares) return null;
+    return DATA.codeshares[state.currentFlight] || null;
+  }
+
+  function flightNumberForTemplate(mode = 'display', language = 'ko') {
+    const primary = state.currentFlight;
+    const codeshare = currentCodeshare();
+
+    if (language === 'en') {
+      if (!codeshare) return primary;
+      return `${primary} (${codeshare.carrierEn} codeshare ${codeshare.flight})`;
+    }
+
+    if (mode === 'speech') {
+      const primarySpoken = formatFlightNumberForReading(primary);
+      if (!codeshare) return primarySpoken;
+      const codeshareSpoken = formatFlightNumberForReading(codeshare.flight);
+      return `${primarySpoken}편, 공동운항 ${codeshare.carrierKo} ${codeshareSpoken}`;
+    }
+
+    if (!codeshare) return primary;
+    return `${primary}편, 공동운항 ${codeshare.carrierKo} ${codeshare.flight}`;
   }
 
   function detectStrongLanguage(char) {
@@ -193,7 +220,7 @@
     if (!template) return '';
     const base = {
       ...context,
-      flightNumber: mode === 'speech' ? formatFlightNumberForReading(state.currentFlight) : state.currentFlight,
+      flightNumber: flightNumberForTemplate(mode, language),
       destination: currentDestination(language)
     };
     return template.replace(/\{([A-Za-z0-9_]+)\}/g, (match, key) => {
@@ -227,9 +254,19 @@
   function renderQuickControls() {
     els.flightButtons.replaceChildren();
     DATA.flights.forEach(flight => {
-      const btn = createEl('button', state.currentFlight === flight ? 'is-active' : '', flight);
+      const btn = createEl('button', state.currentFlight === flight ? 'is-active' : '');
       btn.type = 'button';
       btn.dataset.value = flight;
+      const codeshare = state.codeshareEnabled && DATA.codeshares ? DATA.codeshares[flight] : null;
+
+      btn.appendChild(createEl('span', 'flight-primary', flight));
+      if (codeshare) {
+        btn.appendChild(createEl('span', 'flight-codeshare', `CS ${codeshare.flight}`));
+        btn.setAttribute('aria-label', `${flight}, codeshare ${codeshare.carrierEn} ${codeshare.flight}`);
+      } else {
+        btn.setAttribute('aria-label', flight);
+      }
+
       btn.setAttribute('aria-pressed', String(state.currentFlight === flight));
       btn.addEventListener('click', () => {
         if (state.currentFlight === flight) return;
@@ -241,6 +278,11 @@
       });
       els.flightButtons.appendChild(btn);
     });
+
+    if (els.chkCodeshare) {
+      els.chkCodeshare.checked = state.codeshareEnabled;
+      els.chkCodeshare.setAttribute('aria-checked', String(state.codeshareEnabled));
+    }
 
     els.destinationButtons.replaceChildren();
     Object.entries(DATA.destinations).forEach(([code, dest]) => {
@@ -1026,6 +1068,19 @@
     requestScreenWakeLock(userInitiated);
   }
 
+  function initCodeshareSetting() {
+    if (!els.chkCodeshare) return;
+    state.codeshareEnabled = storageGet(STORAGE.codeshare, 'false') === 'true';
+    els.chkCodeshare.checked = state.codeshareEnabled;
+    els.chkCodeshare.addEventListener('change', () => {
+      stopSpeech();
+      state.codeshareEnabled = els.chkCodeshare.checked;
+      storageSet(STORAGE.codeshare, state.codeshareEnabled ? 'true' : 'false');
+      renderQuickControls();
+      refreshAllPreviews();
+    });
+  }
+
   function initWakeLockSetting() {
     if (!els.chkKeepAwake) return;
 
@@ -1034,9 +1089,6 @@
       els.chkKeepAwake.disabled = true;
       state.keepAwakeEnabled = false;
       updateWakeLockUi('Unavailable');
-      if (els.wakeLockHint) {
-        els.wakeLockHint.textContent = 'Not available in this browser or connection. Screen Wake Lock requires browser support and a secure HTTPS context.';
-      }
       return;
     }
 
@@ -1162,6 +1214,7 @@
     preventPageZoom();
     initPreferences();
     initSettings();
+    initCodeshareSetting();
     initWakeLockSetting();
     els.branchLabel.textContent = DATA.branch || 'TAG Branch';
     els.versionLabel.textContent = `Ver. ${DATA.appVersion || '—'}`;
