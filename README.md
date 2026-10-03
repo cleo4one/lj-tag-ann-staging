@@ -1,8 +1,8 @@
-# JIN AIR TAG Announcement Player — 20261004.11
+# JIN AIR TAG Announcement Player — 20261004.12
 
 Static mobile-first airport announcement player for the JIN AIR TAG branch.
 
-Current build: **20261004.11** with 16 standard announcements plus Custom Announcement.
+Current build: **20261004.12** with 16 standard announcements plus Custom Announcement.
 
 ## Files
 
@@ -16,6 +16,10 @@ Current build: **20261004.11** with 16 standard announcements plus Custom Announ
 ## Announcement content
 
 Operational announcement scripts remain in `data/announcements.js`. The Korean/English announcement wording is intentionally separate from the English application UI.
+
+## Pull to Refresh in Home Screen App
+
+Safari provides its own pull-to-refresh gesture in a normal browser tab. When the site is launched as an installed/standalone Home Screen web app, the app enables its own pull-to-refresh gesture. From the top of the page, drag downward until `Release to refresh` appears, then release. The custom gesture is enabled only in standalone mode so it does not compete with Safari's native browser-tab gesture.
 
 ## Keep Screen Awake
 

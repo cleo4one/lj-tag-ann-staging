@@ -71,6 +71,9 @@
     chkKeepAwake: document.getElementById('chkKeepAwake'),
     chkCodeshare: document.getElementById('chkCodeshare'),
     wakeLockStatus: document.getElementById('wakeLockStatus'),
+    pullRefreshIndicator: document.getElementById('pullRefreshIndicator'),
+    pullRefreshIcon: document.getElementById('pullRefreshIcon'),
+    pullRefreshText: document.getElementById('pullRefreshText'),
     versionLabel: document.getElementById('versionLabel'),
     modal: document.getElementById('alertModal'),
     modalMessage: document.getElementById('modalMessage'),
@@ -1335,6 +1338,119 @@
     state.currentDest = Object.prototype.hasOwnProperty.call(DATA.destinations, savedDest) ? savedDest : Object.keys(DATA.destinations)[0];
   }
 
+  function isStandaloneMode() {
+    return window.matchMedia?.('(display-mode: standalone)').matches === true
+      || window.navigator.standalone === true;
+  }
+
+  function initStandalonePullToRefresh() {
+    if (!isStandaloneMode() || !els.pullRefreshIndicator) return;
+
+    document.documentElement.classList.add('standalone-mode');
+
+    const threshold = 88;
+    const maximumPull = 132;
+    let tracking = false;
+    let startY = 0;
+    let pullDistance = 0;
+    let armed = false;
+    let refreshing = false;
+
+    const scrollTop = () => Math.max(
+      document.scrollingElement?.scrollTop || 0,
+      window.scrollY || 0
+    );
+
+    const startedOnInteractiveControl = target => Boolean(
+      target instanceof Element
+      && target.closest('input, textarea, select, button, label, summary, a, [role="button"]')
+    );
+
+    const positionIndicator = () => {
+      const header = document.querySelector('.app-header');
+      const headerBottom = header ? header.getBoundingClientRect().bottom : 0;
+      els.pullRefreshIndicator.style.top = `${Math.max(headerBottom + 8, 8)}px`;
+    };
+
+    const renderPullState = () => {
+      const visible = pullDistance > 8 || refreshing;
+      els.pullRefreshIndicator.classList.toggle('is-visible', visible);
+      els.pullRefreshIndicator.classList.toggle('is-armed', armed && !refreshing);
+      els.pullRefreshIndicator.classList.toggle('is-refreshing', refreshing);
+      els.pullRefreshIndicator.setAttribute('aria-hidden', visible ? 'false' : 'true');
+
+      if (refreshing) {
+        els.pullRefreshText.textContent = 'Refreshing…';
+        return;
+      }
+      els.pullRefreshText.textContent = armed ? 'Release to refresh' : 'Pull to refresh';
+    };
+
+    const resetPull = () => {
+      tracking = false;
+      startY = 0;
+      pullDistance = 0;
+      armed = false;
+      if (!refreshing) renderPullState();
+    };
+
+    document.addEventListener('touchstart', event => {
+      if (refreshing || !state.unlocked) return;
+      if (!els.modal.classList.contains('is-hidden')) return;
+      if (event.touches.length !== 1 || scrollTop() > 1) return;
+      if (startedOnInteractiveControl(event.target)) return;
+
+      tracking = true;
+      startY = event.touches[0].clientY;
+      pullDistance = 0;
+      armed = false;
+      positionIndicator();
+      renderPullState();
+    }, { passive: true });
+
+    document.addEventListener('touchmove', event => {
+      if (!tracking || refreshing || event.touches.length !== 1) return;
+      if (scrollTop() > 1) {
+        resetPull();
+        return;
+      }
+
+      const deltaY = event.touches[0].clientY - startY;
+      if (deltaY <= 0) {
+        pullDistance = 0;
+        armed = false;
+        renderPullState();
+        return;
+      }
+
+      // Standalone iOS web apps do not provide Safari's native pull-to-refresh.
+      // Apply resistance so the gesture feels deliberate and does not over-travel.
+      event.preventDefault();
+      pullDistance = Math.min(maximumPull, deltaY * 0.58);
+      armed = pullDistance >= threshold;
+      renderPullState();
+    }, { passive: false });
+
+    const finishPull = () => {
+      if (!tracking || refreshing) return;
+      const shouldRefresh = armed;
+      resetPull();
+
+      if (!shouldRefresh) return;
+      refreshing = true;
+      armed = false;
+      pullDistance = threshold;
+      renderPullState();
+      try { stopSpeech(); } catch (_) { /* noop */ }
+      window.setTimeout(() => window.location.reload(), 140);
+    };
+
+    document.addEventListener('touchend', finishPull, { passive: true });
+    document.addEventListener('touchcancel', resetPull, { passive: true });
+    window.addEventListener('resize', positionIndicator, { passive: true });
+    window.addEventListener('orientationchange', positionIndicator, { passive: true });
+  }
+
   function initServiceWorker() {
     if (!('serviceWorker' in navigator)) return;
     if (!/^https?:$/.test(location.protocol)) return;
@@ -1355,6 +1471,7 @@
 
   function init() {
     preventPageZoom();
+    initStandalonePullToRefresh();
     initPreferences();
     initSettings();
     initCodeshareSetting();

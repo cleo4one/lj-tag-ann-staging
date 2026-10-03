@@ -1,8 +1,16 @@
+## 20261004.12
+- Added a custom pull-to-refresh gesture for installed/standalone Home Screen web-app mode.
+- Safari browser tabs continue using Safari's native pull-to-refresh; the custom gesture activates only in standalone mode.
+- Added a compact `Pull to refresh` / `Release to refresh` / `Refreshing…` indicator below the sticky header.
+- Refresh triggers only when the page is already at the top and the downward pull crosses the threshold.
+- Interactive controls are excluded from gesture start to avoid accidental refreshes while adjusting settings or editing inputs.
+- No announcement scripts or TTS behavior changed.
+
 ## 20261004.11
 - Changed Announcement 16 UI field label from `Location` to `Proceed to`.
 - Announcement scripts, English Reference, location options, and TTS behavior are unchanged.
 
-# 20261004.11
+# 20261004.10
 
 - Rewrote all `Show English Reference` scripts as natural airport PA announcements rather than literal Korean translations.
 - Standardized common PA phraseology such as final boarding calls, passenger paging, gate-change announcements, pre-boarding invitations, and delay updates.

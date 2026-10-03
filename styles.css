@@ -211,6 +211,51 @@ button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-
   border: 0 !important;
 }
 
+.pull-refresh-indicator {
+  position: fixed;
+  left: 50%;
+  top: 5rem;
+  z-index: 80;
+  display: inline-flex;
+  align-items: center;
+  gap: .42rem;
+  min-height: 2rem;
+  padding: .38rem .72rem;
+  border: 1px solid rgba(180, 219, 43, .28);
+  border-radius: 999px;
+  background: rgba(13, 23, 40, .96);
+  color: #dbe5f1;
+  box-shadow: 0 10px 30px rgba(2, 6, 23, .32);
+  font-size: .72rem;
+  font-weight: 800;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -.55rem) scale(.97);
+  transition: opacity .12s ease, transform .12s ease, border-color .12s ease;
+}
+.pull-refresh-indicator.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0) scale(1);
+}
+.pull-refresh-indicator.is-armed {
+  border-color: rgba(180, 219, 43, .78);
+  color: var(--lime-strong);
+}
+.pull-refresh-icon {
+  display: inline-block;
+  color: var(--lime);
+  font-size: .92rem;
+  line-height: 1;
+  transition: transform .14s ease;
+}
+.pull-refresh-indicator.is-armed .pull-refresh-icon { transform: rotate(180deg); }
+.pull-refresh-indicator.is-refreshing .pull-refresh-icon {
+  animation: pull-refresh-spin .7s linear infinite;
+}
+@keyframes pull-refresh-spin { to { transform: rotate(360deg); } }
+html.standalone-mode,
+html.standalone-mode body { overscroll-behavior-y: none; }
+
 .page-shell {
   width: min(100% - 1.25rem, 54rem);
   margin: 0 auto;
