@@ -396,18 +396,19 @@
     labelRow.appendChild(label);
 
     let input;
+    let translate = null;
     if (spec.type === 'textarea') {
       input = createEl('textarea', 'textarea-control');
       input.rows = 2;
       input.autocomplete = 'off';
       input.spellcheck = false;
       if (spec.translate) {
-        const translate = createEl('button', 'mini-button translate-button', 'Convert Name to Korean');
+        translate = createEl('button', 'mini-button translate-button', 'A→가');
         translate.type = 'button';
         translate.dataset.translateTarget = spec.key;
-        translate.title = 'Internet connection required';
+        translate.title = 'Convert name to Korean (internet required)';
+        translate.setAttribute('aria-label', 'Convert name to Korean');
         translate.addEventListener('click', () => translateName(card, ann, input, translate));
-        labelRow.appendChild(translate);
       }
     } else if (spec.type === 'select') {
       input = createEl('select', 'input-control');
@@ -437,6 +438,7 @@
     input.addEventListener('input', () => updateCardPreview(card, ann));
     input.addEventListener('change', () => updateCardPreview(card, ann));
     group.append(labelRow, input);
+    if (translate) group.appendChild(translate);
     return group;
   }
 
@@ -583,11 +585,47 @@
       if (cluster) {
         const row = createEl('div', 'input-cluster');
         row.dataset.sourceCount = String(cluster.sourceSpecs.length);
-        cluster.sourceSpecs.forEach(sourceSpec => {
-          const input = renderInput(card, ann, sourceSpec);
-          input.classList.add('cluster-primary');
-          row.appendChild(input);
-        });
+        const sourceKeys = cluster.sourceSpecs.map(sourceSpec => sourceSpec.key);
+        const isTimeCluster = sourceKeys.length === 2 && sourceKeys[0] === 'hour' && sourceKeys[1] === 'minute';
+
+        let translateAction = null;
+
+        if (isTimeCluster) {
+          row.classList.add('time-input-cluster');
+          const timeGroup = createEl('div', 'time-entry-group cluster-primary');
+          const timeLabel = createEl('div', 'input-label-row');
+          timeLabel.appendChild(createEl('span', 'input-label', 'Est. boarding time'));
+          const timeControls = createEl('div', 'time-entry-controls');
+
+          cluster.sourceSpecs.forEach((sourceSpec, sourceIndex) => {
+            const inputGroup = renderInput(card, ann, sourceSpec);
+            inputGroup.classList.add('time-part');
+            const labelRow = inputGroup.querySelector('.input-label-row');
+            if (labelRow) labelRow.classList.add('sr-only');
+            const input = inputGroup.querySelector('[data-input-key]');
+            if (input) {
+              input.setAttribute('aria-label', sourceSpec.key === 'hour' ? 'Estimated boarding hour' : 'Estimated boarding minute');
+              input.placeholder = sourceSpec.key === 'hour' ? 'HH' : 'MM';
+            }
+            timeControls.appendChild(inputGroup);
+            if (sourceIndex === 0) timeControls.appendChild(createEl('span', 'time-separator', ':'));
+          });
+
+          timeGroup.append(timeLabel, timeControls);
+          row.appendChild(timeGroup);
+        } else {
+          cluster.sourceSpecs.forEach(sourceSpec => {
+            const input = renderInput(card, ann, sourceSpec);
+            input.classList.add('cluster-primary');
+            const translate = input.querySelector('.translate-button');
+            if (translate && !translateAction) {
+              translateAction = translate;
+              translate.remove();
+            }
+            row.appendChild(input);
+          });
+        }
+
         const repeat = renderInput(card, ann, cluster.repeatSpec);
         repeat.classList.add('cluster-repeat');
         const repeatLabel = repeat.querySelector('.input-label');
@@ -595,6 +633,7 @@
           repeatLabel.textContent = 'Repeats';
           repeatLabel.title = cluster.repeatSpec.label;
         }
+        if (translateAction) repeat.appendChild(translateAction);
         row.appendChild(repeat);
         inputArea.appendChild(row);
         return;
@@ -711,8 +750,13 @@
   function renderCustomAnnouncement() {
     const card = createEl('article', 'ann-card custom-card');
     card.dataset.annId = 'free';
+    const labelRow = createEl('div', 'custom-input-label-row');
     const label = createEl('label', 'input-label', 'Enter the announcement text.');
     label.htmlFor = 'customText';
+    const clear = createEl('button', 'mini-button custom-clear-button', '✕ Clear');
+    clear.type = 'button';
+    clear.disabled = true;
+    clear.setAttribute('aria-label', 'Clear custom announcement text');
     const textarea = createEl('textarea', 'textarea-control');
     textarea.id = 'customText';
     textarea.rows = 5;
@@ -735,9 +779,43 @@
     stop.dataset.role = 'stop';
     player.append(play, stop);
 
+    let lastClearedText = '';
+    const setClearMode = () => {
+      clear.textContent = '✕ Clear';
+      clear.dataset.mode = 'clear';
+      clear.setAttribute('aria-label', 'Clear custom announcement text');
+      clear.disabled = !textarea.value.trim();
+    };
+    const setUndoMode = () => {
+      clear.textContent = '↶ Undo';
+      clear.dataset.mode = 'undo';
+      clear.setAttribute('aria-label', 'Restore cleared custom announcement text');
+      clear.disabled = false;
+    };
+
     textarea.addEventListener('input', () => {
+      if (lastClearedText && textarea.value) lastClearedText = '';
+      setClearMode();
       if (state.active?.card === card) return;
       script.textContent = textarea.value.trim() || 'Your text will appear here.';
+    });
+    clear.addEventListener('click', () => {
+      if (clear.dataset.mode === 'undo' && lastClearedText) {
+        textarea.value = lastClearedText;
+        lastClearedText = '';
+        script.textContent = textarea.value.trim() || 'Your text will appear here.';
+        setClearMode();
+        textarea.focus();
+        return;
+      }
+      if (!textarea.value) return;
+      if (state.active?.card === card) stopSpeech();
+      lastClearedText = textarea.value;
+      textarea.value = '';
+      script.textContent = 'Your text will appear here.';
+      clearValidation(card);
+      setUndoMode();
+      textarea.focus();
     });
     play.addEventListener('click', () => {
       if (state.active?.card === card) {
@@ -755,7 +833,8 @@
     });
     stop.addEventListener('click', () => stopSpeech());
 
-    card.append(label, textarea, progress, script, validation, player);
+    labelRow.append(label, clear);
+    card.append(labelRow, textarea, progress, script, validation, player);
     els.customAnnouncement.replaceChildren(card);
   }
 
@@ -792,7 +871,7 @@
 
     const original = button.textContent;
     button.disabled = true;
-    button.textContent = 'Translating…';
+    button.textContent = '…';
     try {
       const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(query)}&langpair=en|ko`;
       const response = await fetch(url, { method: 'GET', referrerPolicy: 'no-referrer' });

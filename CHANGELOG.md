@@ -1,3 +1,11 @@
+# 20261004.8
+
+- Added a compact Custom Announcement `✕ Clear` action with one-step `↶ Undo`.
+- Replaced the long visible name-conversion label with `A→가` and moved it below the matching repeat control.
+- Shortened Announcement 10 gate input label to `New gate`.
+- Combined Announcement 14/15 hour and minute inputs under one `Est. boarding time` label with a visual colon separator.
+- No operational announcement wording or TTS templates were changed.
+
 # 20261004.7
 
 - Removed the duplicate `TTS SETTINGS` heading and kept a single `Voice Engine Settings` title.

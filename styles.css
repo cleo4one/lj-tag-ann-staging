@@ -441,10 +441,32 @@ h2 { margin: 0; font-size: 1.05rem; }
 .input-cluster .input-group.is-wide { grid-column: auto; }
 .input-cluster .textarea-control { min-height: 3.35rem; }
 .input-cluster .cluster-repeat { align-self: start; min-width: 0; }
+.time-input-cluster { grid-template-columns: minmax(0, 1fr) 4.85rem !important; }
+.time-entry-group { min-width: 0; }
+.time-entry-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: .38rem;
+}
+.time-part { min-width: 0; }
+.time-part .input-control { text-align: center; font-variant-numeric: tabular-nums; }
+.time-separator {
+  color: #dbe4ef;
+  font-size: 1.05rem;
+  font-weight: 900;
+  line-height: 1;
+}
 
 .input-label-row { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-bottom: .32rem; }
 .input-label { color: #cbd5e1; font-size: .72rem; font-weight: 750; }
-.translate-button { color: var(--lime); }
+.translate-button {
+  width: 100%;
+  margin-top: .34rem;
+  color: var(--lime);
+  font-weight: 900;
+  letter-spacing: .01em;
+}
 .repeat-label-row { min-width: 0; }
 .repeat-label-row .input-label {
   display: block;
@@ -499,6 +521,20 @@ h2 { margin: 0; font-size: 1.05rem; }
 .validation-message { margin: .5rem 0 0; color: var(--danger); font-size: .72rem; }
 
 .custom-card { padding: 1rem; }
+.custom-input-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .6rem;
+  margin-bottom: .32rem;
+}
+.custom-clear-button {
+  flex: 0 0 auto;
+  color: #cbd5e1;
+  padding-inline: .48rem;
+}
+.custom-clear-button:not(:disabled):hover { color: #fff; }
+.custom-clear-button:disabled { opacity: .38; cursor: default; }
 .custom-card .textarea-control { min-height: 7rem; }
 .custom-preview { margin-top: .65rem; }
 
@@ -571,6 +607,7 @@ h2 { margin: 0; font-size: 1.05rem; }
   .footer-topline { flex-direction: column; gap: .08rem; }
   .input-cluster { grid-template-columns: minmax(0, 1fr) 4.65rem; }
   .input-cluster[data-source-count="2"] { grid-template-columns: minmax(0, .72fr) minmax(0, 1.05fr) 4.65rem; }
+  .time-input-cluster { grid-template-columns: minmax(0, 1fr) 4.65rem !important; }
 }
 
 
@@ -582,6 +619,8 @@ h2 { margin: 0; font-size: 1.05rem; }
   .input-cluster[data-source-count="2"] {
     grid-template-columns: repeat(2, minmax(0, 1fr)) 4.5rem;
   }
+  .time-input-cluster { grid-template-columns: minmax(0, 1fr) 4.5rem !important; }
+  .time-entry-controls { gap: .28rem; }
   .repeat-controls { grid-template-columns: 1.35rem minmax(.9rem, auto) 1.35rem; gap: .12rem; }
   .repeat-button { width: 1.35rem; height: 1.72rem; }
   .repeat-value { font-size: .72rem; }

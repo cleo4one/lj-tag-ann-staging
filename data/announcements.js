@@ -5,7 +5,7 @@
  * UI labels are English; announcement templates preserve their operational language.
  */
 window.LJ_ANNOUNCEMENT_DATA = {
-  "appVersion": "20261004.7",
+  "appVersion": "20261004.8",
   "branch": "TAG Branch",
   "flights": [
     "LJ044",
@@ -324,8 +324,8 @@ window.LJ_ANNOUNCEMENT_DATA = {
         {
           "type": "number",
           "key": "gate",
-          "label": "New gate number (1–7)",
-          "placeholder": "e.g. 5",
+          "label": "New gate",
+          "placeholder": "1–7",
           "required": true,
           "min": 1,
           "max": 7
@@ -404,8 +404,8 @@ window.LJ_ANNOUNCEMENT_DATA = {
         {
           "type": "number",
           "key": "hour",
-          "label": "Estimated boarding time — Hour",
-          "placeholder": "e.g. 10",
+          "label": "Hour",
+          "placeholder": "HH",
           "required": true,
           "min": 0,
           "max": 23
@@ -413,8 +413,8 @@ window.LJ_ANNOUNCEMENT_DATA = {
         {
           "type": "number",
           "key": "minute",
-          "label": "Estimated boarding time — Minute",
-          "placeholder": "e.g. 30",
+          "label": "Minute",
+          "placeholder": "MM",
           "required": true,
           "min": 0,
           "max": 59
@@ -450,8 +450,8 @@ window.LJ_ANNOUNCEMENT_DATA = {
         {
           "type": "number",
           "key": "hour",
-          "label": "Estimated boarding time — Hour",
-          "placeholder": "e.g. 10",
+          "label": "Hour",
+          "placeholder": "HH",
           "required": true,
           "min": 0,
           "max": 23
@@ -459,8 +459,8 @@ window.LJ_ANNOUNCEMENT_DATA = {
         {
           "type": "number",
           "key": "minute",
-          "label": "Estimated boarding time — Minute",
-          "placeholder": "e.g. 30",
+          "label": "Minute",
+          "placeholder": "MM",
           "required": true,
           "min": 0,
           "max": 59
