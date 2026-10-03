@@ -136,7 +136,7 @@
 
     if (language === 'en') {
       if (!codeshare) return primary;
-      return `${primary} (${codeshare.carrierEn} codeshare ${codeshare.flight})`;
+      return `${primary}, also operating as ${codeshare.carrierEn} flight ${codeshare.flight}`;
     }
 
     if (mode === 'speech') {

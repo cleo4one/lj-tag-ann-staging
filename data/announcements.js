@@ -3,9 +3,10 @@
  * Edit announcement wording, titles, English references, or input definitions here.
  * Keep placeholder names in braces (for example {flightNumber}, {destination}, {gate}).
  * UI labels are English; announcement templates preserve their operational language.
+ * English references are written as natural airport PA scripts rather than literal translations.
  */
 window.LJ_ANNOUNCEMENT_DATA = {
-  "appVersion": "20261004.9",
+  "appVersion": "20261004.10",
   "branch": "TAG Branch",
   "flights": [
     "LJ044",
@@ -39,7 +40,7 @@ window.LJ_ANNOUNCEMENT_DATA = {
       "summary": "Final check-in call",
       "language": "auto",
       "template": "진에어에서 수속 마감 예정 안내 말씀 드리겠습니다. 진에어 {destination}행 체크인 카운터가 이제 곧 마감될 예정입니다. 아직까지 수속하지 않으신 진에어 {destination}행 승객께서는 카운터에서 수속을 바로 마쳐주시기 바랍니다. 감사합니다.",
-      "englishTemplate": "Final call for check-in. This is a final reminder for passengers traveling on Jin Air flight to {destination}. The check-in counter will be closing shortly. If you have not yet completed check-in, please proceed to the counter immediately. Thank you."
+      "englishTemplate": "May I have your attention, please. This is the final check-in call for passengers travelling with Jin Air to {destination}. The Jin Air check-in counters will be closing shortly. Any passengers who have not yet checked in are requested to report to the Jin Air check-in counter immediately. Thank you."
     },
     {
       "id": "2",
@@ -75,7 +76,7 @@ window.LJ_ANNOUNCEMENT_DATA = {
           "separator": ", "
         }
       ],
-      "englishTemplate": "Final call for check-in. Passenger {names}, booked on Jin Air flight to {destination}, please proceed to the Jin Air check-in counter immediately, as it will be closing shortly. Thank you."
+      "englishTemplate": "May I have your attention, please. Jin Air is making a final check-in call for {names}, travelling to {destination}. Please report to the Jin Air check-in counter immediately to complete check-in. The counter will be closing shortly. Once again, {names}, please report to the Jin Air check-in counter. Thank you."
     },
     {
       "id": "3",
@@ -111,7 +112,7 @@ window.LJ_ANNOUNCEMENT_DATA = {
           "separator": ", "
         }
       ],
-      "englishTemplate": "Passenger {names} on Jin Air flight to {destination}, your checked baggage requires additional screening and has not yet been loaded. Please report to the Jin Air check-in counter or boarding gate as soon as possible for further assistance. Thank you."
+      "englishTemplate": "May I have your attention, please. Jin Air is paging {names}, travelling to {destination}. Your checked baggage requires additional security inspection and cannot be loaded until the inspection has been completed. Please report to the Jin Air check-in counter or boarding gate and contact a member of our ground staff as soon as possible. Once again, {names}, please report to a Jin Air staff member. Thank you."
     },
     {
       "id": "4",
@@ -121,7 +122,7 @@ window.LJ_ANNOUNCEMENT_DATA = {
       "summary": "Proceed to immigration",
       "language": "auto",
       "template": "진에어에서 출국 심사대 진입 안내 말씀 드리겠습니다. 공항이 혼잡하오니, 진에어 손님 여러분들께서는 탑승에 문제 없도록, 공항세를 납부하신 후 보안 검색대 및 출국 심사대로 바로 진입해주시기 바랍니다. 감사합니다.",
-      "englishTemplate": "Attention Jin Air passengers: Due to airport congestion, we kindly advise all Jin Air guests to proceed to the security screening and immigration area without delay after paying the terminal fee, to ensure timely boarding. Thank you."
+      "englishTemplate": "Attention, Jin Air passengers. Due to congestion in the terminal, please proceed to security screening and immigration as soon as you have paid the terminal fee. Please allow sufficient time to complete all departure formalities and reach your boarding gate. Thank you for your cooperation."
     },
     {
       "id": "5",
@@ -131,7 +132,7 @@ window.LJ_ANNOUNCEMENT_DATA = {
       "summary": "Pre-boarding assistance",
       "language": "auto",
       "template": "진에어에서 도움이 필요하신 승객의 탑승 안내 말씀 드리겠습니다. 만 2 세 미만, 유아를 동반하신 승객이나, 임산부, 노약자 등, 도움이 필요하신 승객께서는, 진에어 {destination}행 {flightNumber}편의 탑승이 곧 시작될 예정이오니, 지금, 먼저 앞으로 나오시어 탑승을 우선 대기해주시기 바랍니다. 다른 승객분들께서는 일반 탑승 안내를 기다려주시기 바랍니다. 감사합니다.",
-      "englishTemplate": "This is a pre-boarding announcement for Jin Air flight {flightNumber} to {destination}. We would now like to invite passengers requiring special assistance to come forward and prepare for boarding. This includes passengers traveling with infants under the age of two, expectant mothers, and elderly passengers. All other passengers, please remain seated until your boarding group is called. Thank you."
+      "englishTemplate": "May I have your attention, please. We will shortly begin boarding Jin Air flight {flightNumber}, bound for {destination}. At this time, we invite passengers requiring assistance, expectant mothers, elderly passengers, and passengers travelling with infants under two years of age to come forward and prepare for priority boarding. All other passengers, please remain seated and wait for the general boarding announcement. Thank you."
     },
     {
       "id": "6",
@@ -168,7 +169,7 @@ window.LJ_ANNOUNCEMENT_DATA = {
           "separator": ", "
         }
       ],
-      "englishTemplate": "Jin Air flight {flightNumber} to {destination} is now boarding. All passengers for Jin Air flight {flightNumber}, please proceed to Gate {gate} for boarding at this time. Please have your boarding pass and passport ready for individual verification at the gate. Thank you."
+      "englishTemplate": "May I have your attention, please. Jin Air flight {flightNumber}, bound for {destination}, is now ready for boarding at Gate {gate}. All passengers are invited to board at this time. Please have your boarding pass and passport ready for inspection before approaching the gate. Once again, Jin Air flight {flightNumber}, bound for {destination}, is now boarding at Gate {gate}. Thank you."
     },
     {
       "id": "7",
@@ -205,7 +206,7 @@ window.LJ_ANNOUNCEMENT_DATA = {
           "separator": ", "
         }
       ],
-      "englishTemplate": "This is the boarding announcement for Jin Air flight {flightNumber} to {destination}. Boarding is currently in progress. All remaining passengers are kindly requested to proceed to Gate {gate} and complete boarding at this time. Thank you."
+      "englishTemplate": "May I have your attention, please. Boarding is now in progress for Jin Air flight {flightNumber}, bound for {destination}. All passengers who have not yet boarded are requested to proceed to Gate {gate} and complete boarding as soon as possible. Once again, Jin Air flight {flightNumber}, bound for {destination}, is now boarding at Gate {gate}. Thank you."
     },
     {
       "id": "8",
@@ -242,7 +243,7 @@ window.LJ_ANNOUNCEMENT_DATA = {
           "separator": ", "
         }
       ],
-      "englishTemplate": "Final boarding call for Jin Air flight {flightNumber} to {destination}. This flight is about to close and depart shortly. Any remaining passengers should proceed immediately to Gate {gate} for final boarding. Jin Air will be closing the gate momentarily. Thank you."
+      "englishTemplate": "Attention, please. This is the final boarding call for Jin Air flight {flightNumber}, bound for {destination}. All remaining passengers are requested to proceed immediately to Gate {gate}. The gate will be closing shortly and the flight is preparing for departure. Once again, this is the final boarding call for Jin Air flight {flightNumber}, Gate {gate}. Thank you."
     },
     {
       "id": "9",
@@ -301,7 +302,7 @@ window.LJ_ANNOUNCEMENT_DATA = {
           "separator": ", "
         }
       ],
-      "englishTemplate": "Final call for passenger {names} booked on Jin Air flight {flightNumber} to {destination}. This flight is closing shortly and scheduled for departure. Please proceed immediately to Gate {gate} for final boarding. Jin Air will be closing the gate momentarily. Thank you."
+      "englishTemplate": "Attention, please. This is the final boarding call for {names}, travelling on Jin Air flight {flightNumber}, bound for {destination}. Please proceed immediately to Gate {gate}. The gate will be closing shortly and final departure preparations are underway. Once again, {names}, please report to Gate {gate} immediately. Thank you."
     },
     {
       "id": "10",
@@ -347,7 +348,7 @@ window.LJ_ANNOUNCEMENT_DATA = {
           "separator": ", "
         }
       ],
-      "englishTemplate": "Attention please. This is an announcement from Jin Air. The boarding gate for Jin Air flight {flightNumber} to {destination} has been changed. The new gate is Gate {gate}, located on the {floor} floor. Passengers are kindly requested to proceed to the new gate and wait near Gate {gate}. Thank you."
+      "englishTemplate": "May I have your attention, please. There has been a gate change for Jin Air flight {flightNumber}, bound for {destination}. The new boarding gate is Gate {gate} on Level {floor}. Please proceed to the new gate and remain in the seating area near Gate {gate} until boarding. Once again, Jin Air flight {flightNumber} will depart from Gate {gate} on Level {floor}. Thank you."
     },
     {
       "id": "11",
@@ -372,7 +373,7 @@ window.LJ_ANNOUNCEMENT_DATA = {
           "placeholder": "e.g. 3"
         }
       ],
-      "englishTemplate": "Attention please, this is a gate change announcement from Jin Air. The boarding gate for Jin Air flight {flightNumber} to {destination} has been changed to Gate {gate} on the first floor.\n\nPassengers are kindly requested to first proceed to Gate 7 on the second floor. From there, please use the stairs or elevator located directly across the gate to go down to Gate {gate} on the lower floor.\n\nOnce again, the new boarding gate is Gate {gate} on the first floor. Please wait near the updated gate area. Thank you."
+      "englishTemplate": "May I have your attention, please. There has been a gate change for Jin Air flight {flightNumber}, bound for {destination}. The new boarding gate is Gate {gate} on Level 1. To reach Gate {gate}, please first proceed to Gate 7 on Level 2, then take the stairs or elevator opposite Gate 7 down to the lower level. Once again, the new boarding gate is Gate {gate} on Level 1. Please remain in the seating area near the new gate. Thank you."
     },
     {
       "id": "12",
@@ -381,7 +382,8 @@ window.LJ_ANNOUNCEMENT_DATA = {
       "title": "Carrying Power Banks Onboard Regulations (KR)",
       "summary": "Power bank safety · Korean",
       "language": "auto",
-      "template": "진에어에서 항공기 안전 운항을 위해, 배터리 관련 안내 말씀드리겠습니다. 진에어 기내에서, 보조배터리를 다른 기기에 연결해 사용하거나, 보조배터리 자체를 충전시키는 것은, 모두 엄격히 금지되어 있습니다. 아울러 보조배터리를 기내 상단 선반에 보관하는 것이 금지되어 있으므로, 반드시 직접 휴대하거나 좌석 앞 주머니에 보관해주시기 바랍니다. 또한 단락 방지 및 사용 방지를 위해 절연 테이프를 부착해주시기 바랍니다. 보조배터리는 일인당 최대 두개까지 기내 반입이 가능합니다. 감사합니다."
+      "template": "진에어에서 항공기 안전 운항을 위해, 배터리 관련 안내 말씀드리겠습니다. 진에어 기내에서, 보조배터리를 다른 기기에 연결해 사용하거나, 보조배터리 자체를 충전시키는 것은, 모두 엄격히 금지되어 있습니다. 아울러 보조배터리를 기내 상단 선반에 보관하는 것이 금지되어 있으므로, 반드시 직접 휴대하거나 좌석 앞 주머니에 보관해주시기 바랍니다. 또한 단락 방지 및 사용 방지를 위해 절연 테이프를 부착해주시기 바랍니다. 보조배터리는 일인당 최대 두개까지 기내 반입이 가능합니다. 감사합니다.",
+      "englishTemplate": "May I have your attention, please. For the safe operation of our flight, Jin Air would like to remind passengers of the following requirements for carrying power banks on board. Power banks must not be used to charge or operate other devices during the flight, and the power banks themselves must not be recharged on board. They must not be stored in the overhead bins. Please keep them with you or place them in the seat pocket in front of you. To prevent short circuits, please insulate the terminals with tape. A maximum of two power banks per passenger may be carried on board. Thank you for your cooperation."
     },
     {
       "id": "13",
@@ -436,7 +438,7 @@ window.LJ_ANNOUNCEMENT_DATA = {
           "separator": ", "
         }
       ],
-      "englishTemplate": "Ladies and gentlemen, we apologize for the delay in boarding Jin Air flight {flightNumber} to {destination}. The inbound aircraft has arrived behind schedule, and passenger disembarkation is currently in progress.\nOnce disembarkation is complete and the cabin has been cleaned and prepared, we will make a boarding announcement.\nThe estimated boarding time is around {hour}:{minute}.\nWe kindly ask all passengers of Jin Air flight {flightNumber} to remain seated near the gate area and refrain from lining up until further notice.\nThank you for your understanding."
+      "englishTemplate": "May I have your attention, please. We apologize for the delay to boarding Jin Air flight {flightNumber}, bound for {destination}. The inbound aircraft arrived behind schedule, and arriving passengers are currently disembarking. Once disembarkation, cabin cleaning, and final cabin preparations have been completed, we will begin boarding. Our estimated boarding time is {hour}:{minute}. Please remain seated in the gate area and do not line up at the boarding gate until a further announcement is made. Thank you for your patience and understanding."
     },
     {
       "id": "15",
@@ -482,7 +484,7 @@ window.LJ_ANNOUNCEMENT_DATA = {
           "separator": ", "
         }
       ],
-      "englishTemplate": "Once again, we sincerely apologize for the delay in boarding Jin Air flight {flightNumber} to {destination}.\nDue to the delayed arrival of the inbound aircraft, cabin cleaning and preparations are currently underway.\nThe estimated boarding time is around {hour}:{minute}.\nPassengers on Jin Air flight {flightNumber}, please remain seated near the gate area and refrain from lining up until the next boarding announcement is made.\nThank you for your understanding and patience."
+      "englishTemplate": "May I have your attention, please. We would like to provide an update regarding the delayed boarding of Jin Air flight {flightNumber}, bound for {destination}. Due to the late arrival of the inbound aircraft, cabin cleaning and final preparations are still in progress. Our estimated boarding time is {hour}:{minute}. Please remain seated in the gate area and wait for the next boarding announcement rather than forming a line at the gate. We apologize for the delay and thank you for your patience."
     },
     {
       "id": "16",
@@ -551,7 +553,7 @@ window.LJ_ANNOUNCEMENT_DATA = {
           "separator": ", "
         }
       ],
-      "englishTemplate": "Jin Air is paging a passenger. Passenger {namesRepeated}, traveling on Jin Air to {pagingDestinationEn}, please proceed to the Jin Air {locationEn} and contact a staff member for assistance. Thank you."
+      "englishTemplate": "May I have your attention, please. Jin Air is paging {names}, travelling to {pagingDestinationEn}. Please report to the Jin Air {locationEn} and speak with a member of our ground staff. Once again, {names}, please report to the Jin Air {locationEn}. Thank you."
     }
   ]
 };

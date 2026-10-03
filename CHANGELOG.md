@@ -1,3 +1,11 @@
+# 20261004.10
+
+- Rewrote all `Show English Reference` scripts as natural airport PA announcements rather than literal Korean translations.
+- Standardized common PA phraseology such as final boarding calls, passenger paging, gate-change announcements, pre-boarding invitations, and delay updates.
+- Added an English reference for Announcement 12 while leaving Announcement 13's operational English broadcast unchanged.
+- Improved English codeshare wording to `LJ044, also operating as Korean Air flight KE5768`.
+- Korean announcement templates, inputs, repetition rules, and Korean TTS behavior remain unchanged.
+
 # 20261004.9
 
 - Increased the effective passenger-name textarea height for Announcements 2, 3, 9, and 16.
