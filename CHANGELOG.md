@@ -1,4 +1,8 @@
-# 20261004.10
+## 20261004.11
+- Changed Announcement 16 UI field label from `Location` to `Proceed to`.
+- Announcement scripts, English Reference, location options, and TTS behavior are unchanged.
+
+# 20261004.11
 
 - Rewrote all `Show English Reference` scripts as natural airport PA announcements rather than literal Korean translations.
 - Standardized common PA phraseology such as final boarding calls, passenger paging, gate-change announcements, pre-boarding invitations, and delay updates.

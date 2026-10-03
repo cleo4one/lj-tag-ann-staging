@@ -1,8 +1,8 @@
-# JIN AIR TAG Announcement Player — 20261004.10
+# JIN AIR TAG Announcement Player — 20261004.11
 
 Static mobile-first airport announcement player for the JIN AIR TAG branch.
 
-Current build: **20261004.10** with 16 standard announcements plus Custom Announcement.
+Current build: **20261004.11** with 16 standard announcements plus Custom Announcement.
 
 ## Files
 
@@ -85,7 +85,7 @@ Announcement 16 supports:
 - No announcement wording, input semantics, repetition rules, or TTS behavior changed.
 
 
-## 20261004.10 English PA reference rewrite
+## 20261004.11 English PA reference rewrite
 
 - Rewrote all available `Show English Reference` scripts in natural airport public-address English rather than line-by-line Korean translation.
 - Added an English reference to Announcement 12 (Korean power-bank safety announcement).

@@ -504,7 +504,7 @@ window.LJ_ANNOUNCEMENT_DATA = {
         {
           "type": "choice",
           "key": "location",
-          "label": "Location",
+          "label": "Proceed to",
           "required": true,
           "default": "GATE",
           "options": [
