@@ -42,7 +42,8 @@
     playbackId: 0,
     wakeLock: null,
     keepAwakeEnabled: false,
-    codeshareEnabled: false
+    codeshareEnabled: false,
+    timingCps: { ko: 6.0, en: 12.0 }
   };
 
   const els = {
@@ -925,12 +926,87 @@
     active.progress.style.width = `${pct}%`;
   }
 
+  function normalizeLanguageTag(lang) {
+    return String(lang || '').trim().replace(/_/g, '-').toLowerCase();
+  }
+
+  function voiceMatchesLanguage(voice, language) {
+    const tag = normalizeLanguageTag(voice?.lang);
+    const base = normalizeLanguageTag(language).split('-')[0];
+    return Boolean(base) && (tag === base || tag.startsWith(`${base}-`));
+  }
+
   function selectedVoice(language) {
     const select = language === 'en' ? els.selVoiceEn : els.selVoiceKo;
     if (!select.value) return null;
-    return state.voices.find(v => v.name === select.value && v.lang.toLowerCase().startsWith(language))
+    return state.voices.find(v => v.name === select.value && voiceMatchesLanguage(v, language))
       || state.voices.find(v => v.name === select.value)
       || null;
+  }
+
+  function stopProgressTracker(active = state.active) {
+    const tracker = active?.progressTracker;
+    if (!tracker) return;
+    if (tracker.rafId) window.cancelAnimationFrame(tracker.rafId);
+    active.progressTracker = null;
+  }
+
+  function startProgressTracker(active, segment, rate) {
+    stopProgressTracker(active);
+    const now = performance.now();
+    const tracker = {
+      segmentIndex: active.segmentIndex,
+      cursor: segment.startIndex,
+      fallbackPosition: segment.startIndex,
+      elapsedMs: 0,
+      lastFrameAt: now,
+      lastBoundaryAt: 0,
+      boundaryCount: 0,
+      rate: Math.max(0.1, Number(rate) || 1),
+      rafId: 0
+    };
+    active.progressTracker = tracker;
+
+    const frame = timestamp => {
+      const current = state.active;
+      if (!current || current.id !== active.id || current.progressTracker !== tracker) return;
+      const delta = Math.max(0, Math.min(250, timestamp - tracker.lastFrameAt));
+      tracker.lastFrameAt = timestamp;
+
+      if (current.status === 'playing') {
+        tracker.elapsedMs += delta;
+        const noRecentBoundary = tracker.lastBoundaryAt === 0
+          ? tracker.elapsedMs >= 650
+          : timestamp - tracker.lastBoundaryAt >= 650;
+
+        if (noRecentBoundary) {
+          const baseCps = state.timingCps[segment.lang] || (segment.lang === 'en' ? 12 : 6);
+          tracker.fallbackPosition += (baseCps * tracker.rate * delta) / 1000;
+          const segmentLastIndex = Math.max(segment.startIndex, segment.startIndex + segment.text.length - 1);
+          const nextIndex = Math.min(segmentLastIndex, Math.floor(tracker.fallbackPosition));
+          if (nextIndex > tracker.cursor) {
+            tracker.cursor = nextIndex;
+            updateHighlight(current, tracker.cursor);
+          }
+        }
+      }
+
+      tracker.rafId = window.requestAnimationFrame(frame);
+    };
+
+    tracker.rafId = window.requestAnimationFrame(frame);
+    return tracker;
+  }
+
+  function learnSegmentTiming(segment, tracker) {
+    if (!segment || !tracker || tracker.elapsedMs < 250 || !segment.text) return;
+    const observedCps = segment.text.length / (tracker.elapsedMs / 1000);
+    const baseCps = observedCps / Math.max(0.1, tracker.rate || 1);
+    const min = segment.lang === 'en' ? 5 : 2.5;
+    const max = segment.lang === 'en' ? 30 : 14;
+    const clamped = Math.min(max, Math.max(min, baseCps));
+    const previous = state.timingCps[segment.lang] || clamped;
+    state.timingCps[segment.lang] = (previous * 0.65) + (clamped * 0.35);
   }
 
   function beginPlayback(card, text, forcedLanguage = 'auto') {
@@ -950,7 +1026,8 @@
     state.active = {
       id, card, text, script, progress, playButton, segments, tokens,
       segmentIndex: 0,
-      status: 'playing'
+      status: 'playing',
+      progressTracker: null
     };
     progress.style.width = '0%';
     playButton.textContent = '❚❚ Pause';
@@ -965,7 +1042,8 @@
       return;
     }
 
-    const segment = active.segments[active.segmentIndex];
+    const segmentIndex = active.segmentIndex;
+    const segment = active.segments[segmentIndex];
     const utterance = new SpeechSynthesisUtterance(segment.text);
     utterance.rate = Number.parseFloat(els.rngSpeed.value) || 1;
     utterance.pitch = Number.parseFloat(els.rngPitch.value) || 1;
@@ -973,16 +1051,36 @@
     const voice = selectedVoice(segment.lang);
     if (voice) utterance.voice = voice;
 
+    const ensureProgressTracker = () => {
+      const current = state.active;
+      if (!current || current.id !== id || current.segmentIndex !== segmentIndex) return;
+      if (!current.progressTracker) startProgressTracker(current, segment, utterance.rate);
+    };
+
+    utterance.onstart = ensureProgressTracker;
+
     utterance.onboundary = event => {
       const current = state.active;
       if (!current || current.id !== id || typeof event.charIndex !== 'number') return;
       const globalIndex = segment.startIndex + event.charIndex;
-      updateHighlight(current, globalIndex);
+      const tracker = current.progressTracker;
+      if (tracker) {
+        tracker.lastBoundaryAt = performance.now();
+        tracker.boundaryCount += 1;
+        tracker.cursor = Math.max(tracker.cursor, globalIndex);
+        tracker.fallbackPosition = Math.max(tracker.fallbackPosition, globalIndex);
+        updateHighlight(current, tracker.cursor);
+      } else {
+        updateHighlight(current, globalIndex);
+      }
     };
 
     utterance.onend = () => {
       const current = state.active;
       if (!current || current.id !== id) return;
+      const tracker = current.progressTracker;
+      if (tracker) learnSegmentTiming(segment, tracker);
+      stopProgressTracker(current);
       const segmentEnd = segment.startIndex + segment.text.length;
       updateHighlight(current, Math.max(0, segmentEnd - 1));
       current.segmentIndex += 1;
@@ -1000,6 +1098,9 @@
 
     try {
       synth.speak(utterance);
+      // Some Android/Google TTS combinations omit start/boundary events.
+      // If start is not reported, begin the approximate tracker shortly after speak().
+      window.setTimeout(ensureProgressTracker, 500);
     } catch (error) {
       console.error(error);
       showModal('Speech playback could not start. Check the device TTS settings.');
@@ -1010,6 +1111,7 @@
   function finishPlayback(id) {
     const active = state.active;
     if (!active || active.id !== id) return;
+    stopProgressTracker(active);
     active.progress.style.width = '100%';
     active.playButton.textContent = '▶ Play';
     active.status = 'finished';
@@ -1043,6 +1145,7 @@
   function stopSpeech() {
     state.playbackId += 1;
     const activeCard = state.active?.card || null;
+    if (state.active) stopProgressTracker(state.active);
     state.active = null;
     if (hasSpeech) {
       try { synth.cancel(); } catch (_) { /* noop */ }
@@ -1114,8 +1217,8 @@
       })
       .sort((a, b) => a.name.localeCompare(b.name));
 
-    const ko = state.voices.filter(v => v.lang.toLowerCase().startsWith('ko'));
-    const en = state.voices.filter(v => v.lang.toLowerCase().startsWith('en'));
+    const ko = state.voices.filter(v => voiceMatchesLanguage(v, 'ko'));
+    const en = state.voices.filter(v => voiceMatchesLanguage(v, 'en'));
     const koSaved = readPreference(STORAGE.koVoice, LEGACY_STORAGE.koVoice, '');
     const enSaved = readPreference(STORAGE.enVoice, LEGACY_STORAGE.enVoice, '');
     const currentKo = els.selVoiceKo.value || koSaved;

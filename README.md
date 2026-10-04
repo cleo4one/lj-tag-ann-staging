@@ -1,8 +1,8 @@
-# JIN AIR TAG Announcement Player — 20261004.13
+# JIN AIR TAG Announcement Player — 20261004.14
 
 Static mobile-first airport announcement player for the JIN AIR TAG branch.
 
-Current build: **20261004.13** with 16 standard announcements plus Custom Announcement.
+Current build: **20261004.14** with 16 standard announcements plus Custom Announcement.
 
 ## Files
 
@@ -24,6 +24,13 @@ Safari provides its own pull-to-refresh gesture in a normal browser tab. On iPho
 ## Keep Screen Awake
 
 The **Keep Screen Awake** switch uses the Screen Wake Lock API. It requires browser support and a secure context (normally HTTPS). When enabled, the preference is saved locally and the app attempts to reacquire the lock when the page becomes visible again.
+
+
+## Android Chrome TTS progress and voice filtering
+
+Android/Chromium TTS engines may speak normally without providing reliable word-boundary callbacks. The player therefore uses a hybrid progress strategy: real `boundary`/`charIndex` events are preferred when available, while an adaptive time-based fallback advances the progress bar and word highlight when those events are missing. The fallback pauses and resumes with playback and learns approximate timing from completed speech segments.
+
+Voice locale filtering matches the exact BCP-47 base language. Korean accepts tags such as `ko`, `ko-KR`, and `ko_KR`, but does not accept unrelated tags such as Konkani `kok_IN`.
 
 ## iPhone TTS voices
 
