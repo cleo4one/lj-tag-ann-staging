@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lj-tag-ann-v20261004-14';
+const CACHE_NAME = 'lj-tag-ann-v20261004-15';
 const APP_SHELL = [
   './',
   './index.html',

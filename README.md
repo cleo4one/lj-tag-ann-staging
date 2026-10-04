@@ -1,8 +1,21 @@
-# JIN AIR TAG Announcement Player — 20261004.14
+# JIN AIR TAG Announcement Player — 20261004.15
 
 Static mobile-first airport announcement player for the JIN AIR TAG branch.
 
-Current build: **20261004.14** with 16 standard announcements plus Custom Announcement.
+Current build: **20261004.15** with 16 standard announcements plus Custom Announcement.
+
+
+### Android progress/highlight precision
+
+On Android/Chromium, some TTS engines do not provide reliable word `boundary` events. Build 20261004.15 improves the fallback by:
+
+- splitting long same-language speech into short, natural tracking chunks at sentence endings and selected word boundaries;
+- using each chunk's real `start`/`end` events as synchronization anchors so timing error cannot accumulate across an entire announcement;
+- weighting Hangul/Latin characters, digits, spaces, and punctuation differently instead of assuming every character takes the same time;
+- calibrating the fallback speed from the actual elapsed time of completed chunks, then applying that learned speed to the next chunk; and
+- keeping real `boundary`/`charIndex` data authoritative whenever the browser supplies it.
+
+This remains an estimate when Android does not expose word timing, but it should track substantially closer than the previous whole-segment character-rate fallback.
 
 ## Files
 

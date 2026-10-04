@@ -1,3 +1,12 @@
+## 20261004.15
+
+- Improved Android/Chromium progress-bar and current-word highlighting accuracy when the TTS engine does not emit reliable `boundary` events.
+- Long Android speech segments are now divided into short natural tracking chunks, primarily at sentence endings and safe word boundaries, so real TTS `start`/`end` events re-anchor progress every few seconds instead of allowing timing drift to accumulate across the full announcement.
+- Replaced raw character-count timing with a weighted speech model that treats Hangul/Latin characters, digits, spaces, commas, and sentence punctuation differently.
+- Uses completed chunk `elapsedTime`/playback duration to adapt the estimated speech speed more quickly for the selected device/voice.
+- Real browser `boundary`/`charIndex` events still override the fallback whenever available.
+- Existing 16 announcement definitions, English references, codeshare data, input rules, and UI layout are unchanged from 20261004.14.
+
 ## 20261004.14
 
 - Fixed Android/Chromium voice filtering so language matching uses exact BCP-47 base tags. `Konkani India (kok_IN)` is no longer incorrectly listed as a Korean voice; `ko`, `ko-KR`, and `ko_KR` remain valid Korean tags.

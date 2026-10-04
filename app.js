@@ -43,7 +43,7 @@
     wakeLock: null,
     keepAwakeEnabled: false,
     codeshareEnabled: false,
-    timingCps: { ko: 6.0, en: 12.0 }
+    timingUnitsPerSecond: { ko: 5.6, en: 11.5 }
   };
 
   const els = {
@@ -213,6 +213,112 @@
 
     push();
     return segments;
+  }
+
+
+  const IS_ANDROID = /Android/i.test(navigator.userAgent || '');
+
+  function timingWeightForChar(char, language = 'ko') {
+    if (!char) return 0;
+    if (/\s/.test(char)) return 0.16;
+    if (/[.!?。！？]/.test(char)) return language === 'ko' ? 2.3 : 2.0;
+    if (/[,，]/.test(char)) return language === 'ko' ? 1.25 : 1.05;
+    if (/[;；:：]/.test(char)) return 1.45;
+    if (/[\-–—/()\[\]{}]/.test(char)) return 0.38;
+    if (/\d/.test(char)) return language === 'ko' ? 1.05 : 0.72;
+    if (language === 'en' && /[A-Za-zÀ-ÖØ-öø-ÿĀ-ž]/.test(char)) return 0.72;
+    return 1;
+  }
+
+  function timingWeight(text, language = 'ko') {
+    let total = 0;
+    for (const char of String(text || '')) total += timingWeightForChar(char, language);
+    return Math.max(0.01, total);
+  }
+
+  function buildTimingMap(text, language = 'ko') {
+    const cumulative = [0];
+    let total = 0;
+    for (const char of String(text || '')) {
+      total += timingWeightForChar(char, language);
+      cumulative.push(total);
+    }
+    return { cumulative, total: Math.max(0.01, total) };
+  }
+
+  function charOffsetForTimingUnits(map, units) {
+    if (!map?.cumulative?.length) return 0;
+    const target = Math.max(0, Math.min(map.total, units));
+    let low = 0;
+    let high = map.cumulative.length - 1;
+    while (low < high) {
+      const mid = Math.floor((low + high) / 2);
+      if (map.cumulative[mid] < target) low = mid + 1;
+      else high = mid;
+    }
+    return Math.max(0, Math.min(map.cumulative.length - 2, low));
+  }
+
+  function splitSegmentIntoTrackingChunks(segment) {
+    if (!IS_ANDROID || !segment?.text || segment.text.length < 24) return [segment];
+
+    const text = segment.text;
+    const language = segment.lang || 'ko';
+    const chunks = [];
+    const softTarget = language === 'en' ? 26 : 22;
+    const hardTarget = language === 'en' ? 38 : 30;
+    const punctuationMin = language === 'en' ? 8 : 7;
+    let start = 0;
+
+    while (start < text.length) {
+      let units = 0;
+      let end = start;
+      let preferredBreak = -1;
+      let hardBreak = -1;
+
+      for (let i = start; i < text.length; i += 1) {
+        const char = text[i];
+        units += timingWeightForChar(char, language);
+        end = i + 1;
+
+        if (/[.!?。！？]/.test(char) && units >= punctuationMin) {
+          preferredBreak = end;
+          break;
+        }
+        if (/[;；:：]/.test(char) && units >= softTarget * 0.82) {
+          preferredBreak = end;
+          break;
+        }
+        if (/\s/.test(char)) {
+          if (units >= softTarget) preferredBreak = end;
+          if (units >= hardTarget * 0.72) hardBreak = end;
+        }
+        if (units >= hardTarget) {
+          preferredBreak = preferredBreak > start ? preferredBreak : (hardBreak > start ? hardBreak : end);
+          break;
+        }
+      }
+
+      let chunkEnd = preferredBreak > start ? preferredBreak : end;
+      if (chunkEnd <= start) chunkEnd = Math.min(text.length, start + 1);
+      const chunkText = text.slice(start, chunkEnd);
+      if (chunkText) {
+        chunks.push({
+          text: chunkText,
+          lang: language,
+          startIndex: segment.startIndex + start,
+          trackingChunk: true
+        });
+      }
+      start = chunkEnd;
+    }
+
+    return chunks.length ? chunks : [segment];
+  }
+
+  function refineSegmentsForTracking(segments) {
+    if (!IS_ANDROID) return segments;
+    return segments.flatMap(splitSegmentIntoTrackingChunks);
   }
 
   function currentDestination(language = 'ko') {
@@ -954,10 +1060,12 @@
   function startProgressTracker(active, segment, rate) {
     stopProgressTracker(active);
     const now = performance.now();
+    const timingMap = buildTimingMap(segment.text, segment.lang);
     const tracker = {
       segmentIndex: active.segmentIndex,
       cursor: segment.startIndex,
-      fallbackPosition: segment.startIndex,
+      fallbackUnits: 0,
+      timingMap,
       elapsedMs: 0,
       lastFrameAt: now,
       lastBoundaryAt: 0,
@@ -976,14 +1084,15 @@
       if (current.status === 'playing') {
         tracker.elapsedMs += delta;
         const noRecentBoundary = tracker.lastBoundaryAt === 0
-          ? tracker.elapsedMs >= 650
-          : timestamp - tracker.lastBoundaryAt >= 650;
+          ? tracker.elapsedMs >= 220
+          : timestamp - tracker.lastBoundaryAt >= 420;
 
         if (noRecentBoundary) {
-          const baseCps = state.timingCps[segment.lang] || (segment.lang === 'en' ? 12 : 6);
-          tracker.fallbackPosition += (baseCps * tracker.rate * delta) / 1000;
+          const baseUps = state.timingUnitsPerSecond[segment.lang] || (segment.lang === 'en' ? 11.5 : 5.6);
+          tracker.fallbackUnits += (baseUps * tracker.rate * delta) / 1000;
+          const localOffset = charOffsetForTimingUnits(tracker.timingMap, tracker.fallbackUnits);
           const segmentLastIndex = Math.max(segment.startIndex, segment.startIndex + segment.text.length - 1);
-          const nextIndex = Math.min(segmentLastIndex, Math.floor(tracker.fallbackPosition));
+          const nextIndex = Math.min(segmentLastIndex, segment.startIndex + localOffset);
           if (nextIndex > tracker.cursor) {
             tracker.cursor = nextIndex;
             updateHighlight(current, tracker.cursor);
@@ -998,15 +1107,19 @@
     return tracker;
   }
 
-  function learnSegmentTiming(segment, tracker) {
-    if (!segment || !tracker || tracker.elapsedMs < 250 || !segment.text) return;
-    const observedCps = segment.text.length / (tracker.elapsedMs / 1000);
-    const baseCps = observedCps / Math.max(0.1, tracker.rate || 1);
-    const min = segment.lang === 'en' ? 5 : 2.5;
-    const max = segment.lang === 'en' ? 30 : 14;
-    const clamped = Math.min(max, Math.max(min, baseCps));
-    const previous = state.timingCps[segment.lang] || clamped;
-    state.timingCps[segment.lang] = (previous * 0.65) + (clamped * 0.35);
+  function learnSegmentTiming(segment, tracker, reportedElapsedMs = 0) {
+    if (!segment || !tracker || !segment.text) return;
+    const elapsedMs = reportedElapsedMs >= 250 ? reportedElapsedMs : tracker.elapsedMs;
+    if (elapsedMs < 250) return;
+    const totalUnits = tracker.timingMap?.total || timingWeight(segment.text, segment.lang);
+    const observedUps = totalUnits / (elapsedMs / 1000);
+    const baseUps = observedUps / Math.max(0.1, tracker.rate || 1);
+    const min = segment.lang === 'en' ? 4.5 : 2.5;
+    const max = segment.lang === 'en' ? 24 : 11;
+    const clamped = Math.min(max, Math.max(min, baseUps));
+    const previous = state.timingUnitsPerSecond[segment.lang] || clamped;
+    // Frequent Android tracking chunks let us adapt quickly without overreacting to one clause.
+    state.timingUnitsPerSecond[segment.lang] = (previous * 0.45) + (clamped * 0.55);
   }
 
   function beginPlayback(card, text, forcedLanguage = 'auto') {
@@ -1020,7 +1133,7 @@
     const script = card.querySelector('[data-role="script"]');
     const progress = card.querySelector('.progress-fill');
     const playButton = card.querySelector('[data-role="play"]');
-    const segments = parseTextToSegments(text, forcedLanguage);
+    const segments = refineSegmentsForTracking(parseTextToSegments(text, forcedLanguage));
     const tokens = renderHighlightText(script, text);
 
     state.active = {
@@ -1068,23 +1181,33 @@
         tracker.lastBoundaryAt = performance.now();
         tracker.boundaryCount += 1;
         tracker.cursor = Math.max(tracker.cursor, globalIndex);
-        tracker.fallbackPosition = Math.max(tracker.fallbackPosition, globalIndex);
+        const localBoundary = Math.max(0, Math.min(segment.text.length, event.charIndex));
+        tracker.fallbackUnits = Math.max(
+          tracker.fallbackUnits,
+          tracker.timingMap?.cumulative?.[localBoundary] || 0
+        );
         updateHighlight(current, tracker.cursor);
       } else {
         updateHighlight(current, globalIndex);
       }
     };
 
-    utterance.onend = () => {
+    utterance.onend = event => {
       const current = state.active;
       if (!current || current.id !== id) return;
       const tracker = current.progressTracker;
-      if (tracker) learnSegmentTiming(segment, tracker);
+      if (tracker) {
+        const reportedElapsed = Number(event?.elapsedTime);
+        const elapsedMs = Number.isFinite(reportedElapsed) && reportedElapsed > 0
+          ? (reportedElapsed > 120 ? reportedElapsed : reportedElapsed * 1000)
+          : 0;
+        learnSegmentTiming(segment, tracker, elapsedMs);
+      }
       stopProgressTracker(current);
       const segmentEnd = segment.startIndex + segment.text.length;
       updateHighlight(current, Math.max(0, segmentEnd - 1));
       current.segmentIndex += 1;
-      window.setTimeout(() => speakNextSegment(id), 10);
+      window.setTimeout(() => speakNextSegment(id), 0);
     };
 
     utterance.onerror = event => {
